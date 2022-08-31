@@ -211,6 +211,8 @@ const JoyStick = (function (container, parameters, callback) {
             StickStatus.yPosition = movedY;
             StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
             StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+            StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
+            StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
             StickStatus.cardinalDirection = getCardinalDirection();
             callback(StickStatus);
         }
@@ -234,6 +236,8 @@ const JoyStick = (function (container, parameters, callback) {
         StickStatus.yPosition = movedY;
         StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
         StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+        StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
+        StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
         StickStatus.cardinalDirection = getCardinalDirection();
         callback(StickStatus);
     }
@@ -269,6 +273,8 @@ const JoyStick = (function (container, parameters, callback) {
             StickStatus.yPosition = movedY;
             StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
             StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+            StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
+            StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
             StickStatus.cardinalDirection = getCardinalDirection();
             callback(StickStatus);
         }
@@ -292,6 +298,8 @@ const JoyStick = (function (container, parameters, callback) {
         StickStatus.yPosition = movedY;
         StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
         StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+        StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
+        StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
         StickStatus.cardinalDirection = getCardinalDirection();
         callback(StickStatus);
     }
