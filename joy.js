@@ -74,6 +74,9 @@ const JoyStick = (function (container, parameters, callback) {
     const title = (typeof parameters.title === "undefined" ? "joystick" : parameters.title);
     let width = (typeof parameters.width === "undefined" ? 0 : parameters.width),
       height = (typeof parameters.height === "undefined" ? 0 : parameters.height);
+    // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
+    let startNormX = (typeof parameters.startNormX === "undefined" ? 0.5 : parameters.startNormX),
+      startNormY = (typeof parameters.startNormY === "undefined" ? 0.5 : parameters.startNormY);
     const internalFillColor = (typeof parameters.internalFillColor === "undefined" ? "#00AA00" : parameters.internalFillColor),
       internalLineWidth = (typeof parameters.internalLineWidth === "undefined" ? 2 : parameters.internalLineWidth),
       internalStrokeColor = (typeof parameters.internalStrokeColor === "undefined" ? "#003300" : parameters.internalStrokeColor),
@@ -115,8 +118,8 @@ const JoyStick = (function (container, parameters, callback) {
     const directionVerticalLimitPos = canvas.height / 10;
     const directionVerticalLimitNeg = directionVerticalLimitPos * -1;
     // Used to save current position of stick
-    let movedX = centerX;
-    let movedY = centerY;
+    let movedX = canvas.width * startNormX;
+    let movedY = canvas.height * (1-startNormY);
 
     // Check if the device support the touch or not
     if ("ontouchstart" in document.documentElement) {
@@ -371,11 +374,27 @@ const JoyStick = (function (container, parameters, callback) {
     };
 
     /**
-     * @desc Normalizzed value of Y move of stick
+     * @desc Normalized value of Y move of stick
      * @return Integer from -100 to +100
      */
     this.GetY = function () {
         return ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+    };
+
+        /**
+     * @desc Normalizzed value of X move of stick
+     * @return Float from 0 to 1
+     */
+    this.GetNormX = function () {
+        return (1 + (movedX - centerX) / maxMoveStick)/2.0;
+    };
+
+    /**
+     * @desc Normalized value of Y move of stick
+     * @return Float from 0 to 1
+     */
+    this.GetNormY = function () {
+        return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
     };
 
     /**
