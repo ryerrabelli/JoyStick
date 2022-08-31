@@ -404,7 +404,14 @@ const JoyStick = (function (container, parameters, callback) {
     this.GetNormY = function () {
         return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
     };
-
+    this.SetNormX = function (normX) {
+        movedX = centerX + maxMoveStick*(2*normX - 1);
+        return movedX
+    };
+    this.SetNormY = function (normY) {
+        movedY = centerY - maxMoveStick*(2*normY - 1);
+        return movedY;
+    };
     /**
      * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
      * @return String of cardinal point N, NE, E, SE, S, SW, W, NW and C when it is placed in the center
