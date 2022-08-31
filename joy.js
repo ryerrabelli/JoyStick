@@ -7,7 +7,7 @@
  *
  * Modification History:
  * Date         Version     Modified By     Description
- * 2022-08-31   2.1.x       Rahul S. Yerrabelli 
+ * 2022-08-31   2.1.x       Rahul S. Yerrabelli
  * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while
  *                                          maintaining compatibility with previous versions. Fixed Issue #27 too, 
  *                                          thanks to @artisticfox8 for the suggestion.
@@ -119,9 +119,11 @@ const JoyStick = (function (container, parameters, callback) {
     const directionHorizontalLimitNeg = directionHorizontalLimitPos * -1;
     const directionVerticalLimitPos = canvas.height / 10;
     const directionVerticalLimitNeg = directionVerticalLimitPos * -1;
+    const startX = canvas.width * startNormX;
+    const startY = canvas.height * (1-startNormY);
     // Used to save current position of stick
-    let movedX = canvas.width * startNormX;
-    let movedY = canvas.height * (1-startNormY);
+    let movedX = startX;
+    let movedY = startY;
 
     // Check if the device support the touch or not
     if ("ontouchstart" in document.documentElement) {
@@ -183,6 +185,23 @@ const JoyStick = (function (container, parameters, callback) {
         context.stroke();
     }
 
+    function redraw() {
+        // Delete canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        // Redraw object
+        drawExternal();
+        drawInternal();
+    }
+    
+    function updateStickStatus(movedX, movedY) {
+        StickStatus.xPosition = movedX;
+        StickStatus.yPosition = movedY;
+        StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
+        StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+        StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
+        StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
+        StickStatus.cardinalDirection = getCardinalDirection();
+    }
     /**
      * @desc Events for manage touch
      */
@@ -209,13 +228,7 @@ const JoyStick = (function (container, parameters, callback) {
             drawInternal();
 
             // Set attribute of callback
-            StickStatus.xPosition = movedX;
-            StickStatus.yPosition = movedY;
-            StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
-            StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
-            StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
-            StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
-            StickStatus.cardinalDirection = getCardinalDirection();
+            updateStickStatus(movedX, movedY);
             callback(StickStatus);
         }
     }
@@ -224,23 +237,13 @@ const JoyStick = (function (container, parameters, callback) {
         pressed = 0;
         // If required reset position store variable
         if (autoReturnToCenter) {
-            movedX = centerX;
-            movedY = centerY;
+            movedX = startX;
+            movedY = startY;
         }
-        // Delete canvas
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        // Redraw object
-        drawExternal();
-        drawInternal();
+        redraw()
 
         // Set attribute of callback
-        StickStatus.xPosition = movedX;
-        StickStatus.yPosition = movedY;
-        StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
-        StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
-        StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
-        StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
-        StickStatus.cardinalDirection = getCardinalDirection();
+        updateStickStatus(movedX, movedY);
         callback(StickStatus);
     }
 
@@ -264,20 +267,10 @@ const JoyStick = (function (container, parameters, callback) {
                 movedX -= canvas.offsetParent.offsetLeft;
                 movedY -= canvas.offsetParent.offsetTop;
             }
-            // Delete canvas
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            // Redraw object
-            drawExternal();
-            drawInternal();
+            redraw()
 
             // Set attribute of callback
-            StickStatus.xPosition = movedX;
-            StickStatus.yPosition = movedY;
-            StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
-            StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
-            StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
-            StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
-            StickStatus.cardinalDirection = getCardinalDirection();
+            updateStickStatus(movedX, movedY);
             callback(StickStatus);
         }
     }
@@ -286,23 +279,13 @@ const JoyStick = (function (container, parameters, callback) {
         pressed = 0;
         // If required reset position store variable
         if (autoReturnToCenter) {
-            movedX = centerX;
-            movedY = centerY;
+            movedX = startX;
+            movedY = startY;
         }
-        // Delete canvas
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        // Redraw object
-        drawExternal();
-        drawInternal();
+        redraw()
 
         // Set attribute of callback
-        StickStatus.xPosition = movedX;
-        StickStatus.yPosition = movedY;
-        StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
-        StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
-        StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
-        StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
-        StickStatus.cardinalDirection = getCardinalDirection();
+        updateStickStatus(movedX, movedY);
         callback(StickStatus);
     }
 
@@ -391,7 +374,7 @@ const JoyStick = (function (container, parameters, callback) {
         return ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
     };
 
-        /**
+    /**
      * @desc Normalizzed value of X move of stick
      * @return Float from 0 to 1
      */
@@ -406,13 +389,19 @@ const JoyStick = (function (container, parameters, callback) {
     this.GetNormY = function () {
         return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
     };
-    this.SetNormX = function (normX) {
-        movedX = centerX + maxMoveStick*(2*normX - 1);
+    this.SetNormX = function (normX, doRedraw=true) {
+        this.SetNormLoc(normX, null, doRedraw);
         return movedX
     };
-    this.SetNormY = function (normY) {
-        movedY = centerY - maxMoveStick*(2*normY - 1);
+    this.SetNormY = function (normY, doRedraw=true) {
+        this.SetNormLoc(null, normY, doRedraw);
         return movedY;
+    };
+    this.SetNormLoc = function (normX, normY, doRedraw=true) {
+        if (!isNullOrUndef(normX)) movedX = centerX + maxMoveStick*(2*normX - 1);
+        if (!isNullOrUndef(normY)) movedY = centerY - maxMoveStick*(2*normY - 1);
+        if (doRedraw) redraw();
+        return [movedX, movedY];
     };
     /**
      * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
@@ -421,4 +410,9 @@ const JoyStick = (function (container, parameters, callback) {
     this.GetDir = function () {
         return getCardinalDirection();
     };
+    
 });
+
+function isNullOrUndef(myVar) {
+  return myVar === null || myVar === undefined;
+}
