@@ -5,7 +5,9 @@
 
 ## About
 
-**Author: [Roberto D'Amico](http://bobboteck.github.io)**
+**Authors:**
+* [Roberto D'Amico](http://bobboteck.github.io) - original author
+* [Rahul S. Yerrabelli](http://ryerrabelli.github.io) - modifications via fork
 
 A simple **JoyStick** for web application that use HTML5, Canvas and JavaScript.
 You can simply add a JoyStick in your HTML5 page, base configuration is ready for use it.
@@ -34,7 +36,7 @@ The methods available are:
 
 ## How to use it
 
-You can simply look the ***[joy.html](http://bobboteck.github.io/joy/joy.html)*** file for an example of use the library.
+You can simply look the ***[joy.html](http://ryerrabelli.github.io/JoyStick/joy.html)*** file for an example of use the library.
 
 First add the JS library in your page, follow the example code to use, if necessary you need to change te path of joy.js file.
 

@@ -1,12 +1,14 @@
 /*
  * Name          : joy.js
  * @author       : Roberto D'Amico (Bobboteck)
- * Last modified : 09.06.2020
- * Revision      : 1.1.6
+ * @author       : Rahul S. Yerrabelli (ryerrabelli)
+ * Last modified : 08.31.2022
+ * Revision      : 2.1.x
  *
  * Modification History:
  * Date         Version     Modified By     Description
- * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while 
+ * 2022-08-31   2.1.x       Rahul S. Yerrabelli 
+ * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while
  *                                          maintaining compatibility with previous versions. Fixed Issue #27 too, 
  *                                          thanks to @artisticfox8 for the suggestion.
  * 2020-06-09   1.1.6       Roberto D'Amico Fixed Issue #10 and #11
