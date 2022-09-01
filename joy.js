@@ -203,57 +203,22 @@ const JoyStick = (function (container, parameters, callback) {
         StickStatus.cardinalDirection = getCardinalDirection();
     }
     /**
-     * @desc Events for manage touch
+     * @desc Events for manage mouse and touch
      */
     function onTouchStart(event) {
-        pressed = 1;
+        onMouseDown(event);
     }
-
     function onTouchMove(event) {
-        if (pressed === 1 && event.targetTouches[0].target === canvas) {
-            movedX = event.targetTouches[0].pageX;
-            movedY = event.targetTouches[0].pageY;
-            // Manage offset
-            if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
-                movedX -= canvas.offsetLeft;
-                movedY -= canvas.offsetTop;
-            } else {
-                movedX -= canvas.offsetParent.offsetLeft;
-                movedY -= canvas.offsetParent.offsetTop;
-            }
-            // Delete canvas
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            // Redraw object
-            drawExternal();
-            drawInternal();
-
-            // Set attribute of callback
-            updateStickStatus(movedX, movedY);
-            callback(StickStatus);
+        if (event.targetTouches[0].target === canvas) {
+            onMouseMove(event)
         }
     }
-
     function onTouchEnd(event) {
-        pressed = 0;
-        // If required reset position store variable
-        if (autoReturnToCenter) {
-            movedX = startX;
-            movedY = startY;
-        }
-        redraw()
-
-        // Set attribute of callback
-        updateStickStatus(movedX, movedY);
-        callback(StickStatus);
+        onMouseUp(event)
     }
-
-    /**
-     * @desc Events for manage mouse
-     */
     function onMouseDown(event) {
         pressed = 1;
     }
-
     /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
     function onMouseMove(event) {
         if (pressed === 1) {
