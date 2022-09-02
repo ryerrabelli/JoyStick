@@ -52,7 +52,9 @@ let StickStatus = {
     yPosition: 0,
     x: 0,
     y: 0,
-    cardinalDirection: "C"
+    xNorm: 0,
+    yNorm: 0,
+    cardinalDirection: "C",
 };
 
 /**
@@ -282,7 +284,7 @@ const JoyStick = (function (container, parameters, callback) {
 
     function getCardinalDirection() {
         let result = "";
-        let orizontal = movedX - centerX;
+        let horizontal = movedX - centerX;
         let vertical = movedY - centerY;
 
         if (vertical >= directionVerticalLimitNeg && vertical <= directionVerticalLimitPos) {
@@ -295,14 +297,14 @@ const JoyStick = (function (container, parameters, callback) {
             result = "S";
         }
 
-        if (orizontal < directionHorizontalLimitNeg) {
+        if (horizontal < directionHorizontalLimitNeg) {
             if (result === "C") {
                 result = "W";
             } else {
                 result += "W";
             }
         }
-        if (orizontal > directionHorizontalLimitPos) {
+        if (horizontal > directionHorizontalLimitPos) {
             if (result === "C") {
                 result = "E";
             } else {
