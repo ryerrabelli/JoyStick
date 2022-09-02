@@ -141,6 +141,7 @@ const JoyStick = (function (container, parameters, callback) {
         externalRadius: externalRadius,
         maxMoveStickBeyondInternalRadius: maxMoveStickBeyondInternalRadius,
         maxMoveStick: maxMoveStick,
+        moveRelativeToInitialMouseDown: moveRelativeToInitialMouseDown,
         circumference: circumference,
         centerX: centerX,
         centerY: centerY,
@@ -247,10 +248,16 @@ const JoyStick = (function (container, parameters, callback) {
         onMouseUp(event);
     }
     function onMouseDown(event) {
-        pressed = 1;
         const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
         pressedX = loc.x - movedX;  // pressed position relative to the circle
         pressedY = loc.y - movedY;
+        if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
+            pressed = 1;
+        } else {
+            pressedX = null;
+            pressedY = null;
+        }
+
     }
     function getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
         let correctedX, correctedY;
