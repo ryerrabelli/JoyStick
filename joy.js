@@ -101,7 +101,7 @@ const JoyStick = (function (container, parameters, callback) {
     const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadius + radiiDifference : parameters.externalRadius);
     const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
     const maxMoveStick = (typeof parameters.maxMoveStick === "undefined" ? internalRadius + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
-
+    const moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
     callback = callback || ( function (StickStatus) { } );
 
     // Create Canvas element and add it in the Container object
@@ -113,6 +113,8 @@ const JoyStick = (function (container, parameters, callback) {
     const context = canvas.getContext("2d");
 
     let pressed = 0; // Bool - 1=Yes - 0=No
+    let pressedX = null;
+    let pressedY = null;
     const circumference = 2 * Math.PI;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -238,29 +240,43 @@ const JoyStick = (function (container, parameters, callback) {
     }
     function onTouchMove(event) {
         if (event.targetTouches[0].target === canvas) {
-            onMouseMove(event)
+            onMouseMove(event);
         }
     }
     function onTouchEnd(event) {
-        onMouseUp(event)
+        onMouseUp(event);
     }
     function onMouseDown(event) {
         pressed = 1;
+        const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+        pressedX = loc.x - movedX;  // pressed position relative to the circle
+        pressedY = loc.y - movedY;
+    }
+    function getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
+        let correctedX, correctedY;
+        // Manage offset
+        if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
+            correctedX = uncorrectedX - canvas.offsetLeft;
+            correctedY = uncorrectedY - canvas.offsetTop;
+        } else {
+            correctedX = uncorrectedX - canvas.offsetParent.offsetLeft;
+            correctedX = uncorrectedY - canvas.offsetParent.offsetTop;
+        }
+        return {x: correctedX, y: correctedY}
     }
     /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
     function onMouseMove(event) {
         if (pressed === 1) {
-            movedX = event.pageX;
-            movedY = event.pageY;
-            // Manage offset
-            if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
-                movedX -= canvas.offsetLeft;
-                movedY -= canvas.offsetTop;
+            const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+            if (moveRelativeToInitialMouseDown) {
+                movedX = loc.x - pressedX;
+                movedY = loc.y - pressedY;
             } else {
-                movedX -= canvas.offsetParent.offsetLeft;
-                movedY -= canvas.offsetParent.offsetTop;
+                movedX = loc.x;
+                movedY = loc.y;
             }
-            redraw()
+
+            redraw();
 
             // Set attribute of callback
             updateStickStatus(movedX, movedY);
@@ -270,12 +286,14 @@ const JoyStick = (function (container, parameters, callback) {
 
     function onMouseUp(event) {
         pressed = 0;
+        pressedX = null;
+        pressedY = null;
         // If required reset position store variable
         if (autoReturnToCenter) {
             movedX = startX;
             movedY = startY;
         }
-        redraw()
+        redraw();
 
         // Set attribute of callback
         updateStickStatus(movedX, movedY);
