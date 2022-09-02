@@ -72,37 +72,39 @@ let StickStatus = {
  * @param callback {StickStatus} -
  */
 const JoyStick = (function (container, parameters, callback) {
+    const givenParameters = Object.assign({}, parameters);   // clone dict
     parameters = parameters || {};
     const title = (typeof parameters.title === "undefined" ? "joystick" : parameters.title);
     let width = (typeof parameters.width === "undefined" ? 0 : parameters.width),
       height = (typeof parameters.height === "undefined" ? 0 : parameters.height);
-    // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
-    let startNormX = (typeof parameters.startNormX === "undefined" ? 0.5 : parameters.startNormX),
-      startNormY = (typeof parameters.startNormY === "undefined" ? 0.5 : parameters.startNormY);
+
+    // Get object that will contain the canvas once we create it
+    const objContainer = document.getElementById(container);
+    // Fixing Unable to preventDefault inside passive event listener due to target being treated as passive in Chrome [Thanks to https://github.com/artisticfox8 for this suggestion]
+    objContainer.style.touchAction = "none";
+    if (width === 0) { width = objContainer.clientWidth; }
+    if (height === 0) { height = objContainer.clientHeight; }
+
     const internalFillColor = (typeof parameters.internalFillColor === "undefined" ? "#00AA00" : parameters.internalFillColor),
       internalLineWidth = (typeof parameters.internalLineWidth === "undefined" ? 2 : parameters.internalLineWidth),
       internalStrokeColor = (typeof parameters.internalStrokeColor === "undefined" ? "#003300" : parameters.internalStrokeColor),
       externalLineWidth = (typeof parameters.externalLineWidth === "undefined" ? 2 : parameters.externalLineWidth),
       externalStrokeColor = (typeof parameters.externalStrokeColor === "undefined" ? "#008000" : parameters.externalStrokeColor),
       autoReturnToCenter = (typeof parameters.autoReturnToCenter === "undefined" ? true : parameters.autoReturnToCenter);
+    // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
+    const startNormX = (typeof parameters.startNormX === "undefined" ? 0.5 : parameters.startNormX),
+      startNormY = (typeof parameters.startNormY === "undefined" ? 0.5 : parameters.startNormY);
+    const radiiDifference = (typeof parameters.radiiDifference === "undefined" ? 30 : parameters.radiiDifference);
+    const internalRadius = (typeof parameters.internalRadius === "undefined" ? (width - (width/2 + 10) - radiiDifference) / 2 : parameters.internalRadius);
+    const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadius + radiiDifference : parameters.externalRadius);
+    const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
+    const maxMoveStick = (typeof parameters.maxMoveStick === "undefined" ? internalRadius + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
 
-    callback = callback || function (StickStatus) {
-    };
+    callback = callback || ( function (StickStatus) { } );
 
     // Create Canvas element and add it in the Container object
-    const objContainer = document.getElementById(container);
-
-    // Fixing Unable to preventDefault inside passive event listener due to target being treated as passive in Chrome [Thanks to https://github.com/artisticfox8 for this suggestion]
-    objContainer.style.touchAction = "none";
-
     const canvas = document.createElement("canvas");
     canvas.id = title;
-    if (width === 0) {
-        width = objContainer.clientWidth;
-    }
-    if (height === 0) {
-        height = objContainer.clientHeight;
-    }
     canvas.width = width;
     canvas.height = height;
     objContainer.appendChild(canvas);
@@ -110,9 +112,6 @@ const JoyStick = (function (container, parameters, callback) {
 
     let pressed = 0; // Bool - 1=Yes - 0=No
     const circumference = 2 * Math.PI;
-    const internalRadius = (canvas.width - ((canvas.width / 2) + 10)) / 2;
-    const maxMoveStick = internalRadius + 5;
-    const externalRadius = internalRadius + 30;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const directionHorizontalLimitPos = canvas.width / 10;
@@ -121,6 +120,33 @@ const JoyStick = (function (container, parameters, callback) {
     const directionVerticalLimitNeg = directionVerticalLimitPos * -1;
     const startX = canvas.width * startNormX;
     const startY = canvas.height * (1-startNormY);
+    const startingParameters = {
+        title: title,
+        width: width,
+        height: height,
+        internalFillColor: internalFillColor,
+        internalLineWidth: internalLineWidth,
+        internalStrokeColor: internalStrokeColor,
+        externalLineWidth: externalLineWidth,
+        externalStrokeColor: externalStrokeColor,
+        autoReturnToCenter: autoReturnToCenter,
+        startNormX: startNormX,
+        startNormY: startNormY,
+        radiiDifference: radiiDifference,
+        internalRadius: internalRadius,
+        externalRadius: externalRadius,
+        maxMoveStickBeyondInternalRadius: maxMoveStickBeyondInternalRadius,
+        maxMoveStick: maxMoveStick,
+        circumference: circumference,
+        centerX: centerX,
+        centerY: centerY,
+        directionHorizontalLimitPos: directionHorizontalLimitPos,
+        directionHorizontalLimitNeg: directionHorizontalLimitNeg,
+        directionVerticalLimitPos: directionVerticalLimitPos,
+        directionVerticalLimitNeg: directionVerticalLimitNeg,
+        startX: startX,
+        startY: startY,
+    }
     // Used to save current position of stick
     let movedX = startX;
     let movedY = startY;
@@ -290,6 +316,21 @@ const JoyStick = (function (container, parameters, callback) {
     /******************************************************
      * Public methods
      *****************************************************/
+
+    /**
+     * @desc Get the parameters given when initializing this object
+     * @return dict
+     */
+    this.GetGivenParameters = function() {
+        return givenParameters;
+    };
+    /**
+     * @desc Get the parameters that were calculated initially during setting up the object
+     * @return dict
+     */
+    this.GetStartingParameters = function() {
+        return startingParameters;
+    };
 
     /**
      * @desc The width of canvas
