@@ -190,17 +190,22 @@ const JoyStick = (function (container, parameters, callback) {
      */
     function drawInternal() {
         context.beginPath();
+        //console.log(movedX.toFixed(2), ",", movedY.toFixed(2))
         if (movedX < internalRadius) {
+            //console.log("X1: ", movedX.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStick.toFixed(1));
             movedX = maxMoveStick;
         }
-        if ((movedX + internalRadius) > canvas.width) {
-            movedX = canvas.width - (maxMoveStick);
+        if (movedX + internalRadius > canvas.width) {
+            //console.log("X2: ", movedX.toFixed(2) + " > " + (canvas.width-internalRadius).toFixed(2) + " -->" + (canvas.width-maxMoveStick).toFixed(1));
+            movedX = canvas.width - maxMoveStick;
         }
         if (movedY < internalRadius) {
+            //console.log("Y1: ", movedY.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStick.toFixed(1));
             movedY = maxMoveStick;
         }
-        if ((movedY + internalRadius) > canvas.height) {
-            movedY = canvas.height - (maxMoveStick);
+        if (movedY + internalRadius > canvas.height) {
+            //console.log("Y2: ", movedY.toFixed(2) + " > " + (canvas.height-internalRadius).toFixed(2) + " -->" + (canvas.height-maxMoveStick).toFixed(1));
+            movedY = canvas.height - maxMoveStick;
         }
         context.arc(movedX, movedY, internalRadius, 0, circumference, false);
         // create radial gradient
@@ -260,6 +265,8 @@ const JoyStick = (function (container, parameters, callback) {
 
     }
     function getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
+        // uncorrected coordinates are relative to the entire webpage
+        // corrected is relative to the canvas
         let correctedX, correctedY;
         // Manage offset
         if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
