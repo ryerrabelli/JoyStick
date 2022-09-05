@@ -100,6 +100,7 @@ const JoyStick = (function (container, parameters, callback) {
     const internalRadius = (typeof parameters.internalRadius === "undefined" ? (width - (width/2 + 10) - radiiDifference) / 2 : parameters.internalRadius);
     const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadius + radiiDifference : parameters.externalRadius);
     const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
+    // maxMoveStick is how far from the center
     const maxMoveStick = (typeof parameters.maxMoveStick === "undefined" ? internalRadius + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
     const moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
     callback = callback || ( function (StickStatus) { } );
@@ -190,23 +191,30 @@ const JoyStick = (function (container, parameters, callback) {
      */
     function drawInternal() {
         context.beginPath();
-        //console.log(movedX.toFixed(2), ",", movedY.toFixed(2))
+
+        // prevent circle from being outside the canvas
         if (movedX < internalRadius) {
             //console.log("X1: ", movedX.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStick.toFixed(1));
-            movedX = maxMoveStick;
+            movedX = internalRadius;
         }
         if (movedX + internalRadius > canvas.width) {
             //console.log("X2: ", movedX.toFixed(2) + " > " + (canvas.width-internalRadius).toFixed(2) + " -->" + (canvas.width-maxMoveStick).toFixed(1));
-            movedX = canvas.width - maxMoveStick;
+            movedX = canvas.width - internalRadius;
         }
         if (movedY < internalRadius) {
             //console.log("Y1: ", movedY.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStick.toFixed(1));
-            movedY = maxMoveStick;
+            movedY = internalRadius;
         }
         if (movedY + internalRadius > canvas.height) {
             //console.log("Y2: ", movedY.toFixed(2) + " > " + (canvas.height-internalRadius).toFixed(2) + " -->" + (canvas.height-maxMoveStick).toFixed(1));
-            movedY = canvas.height - maxMoveStick;
+            movedY = canvas.height - internalRadius;
         }
+        // prevent the circle from being beyond maxMoveStick
+        if ( (movedX-centerX) > maxMoveStick) movedX = centerX + maxMoveStick;
+        if ( (centerX-movedX) > maxMoveStick) movedX = centerX - maxMoveStick;
+        if ( (movedY-centerY) > maxMoveStick) movedY = centerY + maxMoveStick;
+        if ( (centerY-movedY) > maxMoveStick) movedY = centerY - maxMoveStick;
+
         context.arc(movedX, movedY, internalRadius, 0, circumference, false);
         // create radial gradient
         const grd = context.createRadialGradient(centerX, centerY, 5, centerX, centerY, 200);
@@ -232,8 +240,8 @@ const JoyStick = (function (container, parameters, callback) {
     function updateStickStatus(movedX, movedY) {
         StickStatus.xPosition = movedX;
         StickStatus.yPosition = movedY;
-        StickStatus.x = (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
-        StickStatus.y = ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+        StickStatus.x = (100 * (movedX - centerX) / maxMoveStick).toFixed();
+        StickStatus.y = (100 * (movedY - centerY) / maxMoveStick * -1).toFixed();
         StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
         StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
         StickStatus.cardinalDirection = getCardinalDirection();
