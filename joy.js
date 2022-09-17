@@ -98,12 +98,18 @@ const JoyStick = (function (container, parameters, callback) {
       startNormY = (typeof parameters.startNormY === "undefined" ? 0.5 : parameters.startNormY);
     const radiiDifference = (typeof parameters.radiiDifference === "undefined" ? 30 : parameters.radiiDifference);
     const internalRadius = (typeof parameters.internalRadius === "undefined" ? (width - (width/2 + 10) - radiiDifference) / 2 : parameters.internalRadius);
+    const joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
+    const internalRadiusLev2 = (typeof parameters.internalRadiusLev2 === "undefined" ? internalRadius/5 : parameters.internalRadiusLev2);
     const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadius + radiiDifference : parameters.externalRadius);
     const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
     // maxMoveStick is how far from the center
     const maxMoveStick = (typeof parameters.maxMoveStick === "undefined" ? internalRadius + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
     const moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
     callback = callback || ( function (StickStatus) { } );
+
+    const maxMoveStickLev2 = internalRadius-2*internalRadiusLev2; // 2 because one on each side
+    const startNormXLev2 = 1.;
+    const startNormYLev2 = 0.25;
 
     // Create Canvas element and add it in the Container object
     const canvas = document.createElement("canvas");
@@ -119,13 +125,17 @@ const JoyStick = (function (container, parameters, callback) {
     const circumference = 2 * Math.PI;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
+    const centerXLev2 = maxMoveStickLev2 / 2;
+    const centerYLev2 = 0;
     const directionHorizontalLimitPos = canvas.width / 10;
     const directionHorizontalLimitNeg = directionHorizontalLimitPos * -1;
     const directionVerticalLimitPos = canvas.height / 10;
     const directionVerticalLimitNeg = directionVerticalLimitPos * -1;
     const startX = canvas.width * startNormX;
     const startY = canvas.height * (1-startNormY);
-    const startingParameters = {
+    const startXLev2 = maxMoveStickLev2*2 * startNormXLev2;
+    const startYLev2 = maxMoveStickLev2*2 * (1-startNormYLev2);
+    const setupParameters = {
         title: title,
         width: width,
         height: height,
@@ -137,25 +147,35 @@ const JoyStick = (function (container, parameters, callback) {
         autoReturnToCenter: autoReturnToCenter,
         startNormX: startNormX,
         startNormY: startNormY,
+        startNormXLev2: startNormXLev2,
+        startNormYLev2: startNormYLev2,
         radiiDifference: radiiDifference,
         internalRadius: internalRadius,
+        internalRadiusLev2: internalRadiusLev2,
         externalRadius: externalRadius,
         maxMoveStickBeyondInternalRadius: maxMoveStickBeyondInternalRadius,
         maxMoveStick: maxMoveStick,
+        maxMoveStickLev2: maxMoveStickLev2,
         moveRelativeToInitialMouseDown: moveRelativeToInitialMouseDown,
         circumference: circumference,
         centerX: centerX,
         centerY: centerY,
+        centerXLev2: centerXLev2,
+        centerYLev2: centerYLev2,
         directionHorizontalLimitPos: directionHorizontalLimitPos,
         directionHorizontalLimitNeg: directionHorizontalLimitNeg,
         directionVerticalLimitPos: directionVerticalLimitPos,
         directionVerticalLimitNeg: directionVerticalLimitNeg,
         startX: startX,
         startY: startY,
+        startXLev2: startXLev2,
+        startYLev2: startYLev2,
     }
     // Used to save current position of stick
     let movedX = startX;
     let movedY = startY;
+    let movedXLev2 = startXLev2;
+    let movedYLev2 = startYLev2;
 
     // Check if the device support the touch or not
     if ("ontouchstart" in document.documentElement) {
@@ -191,7 +211,6 @@ const JoyStick = (function (container, parameters, callback) {
      */
     function drawInternal() {
         context.beginPath();
-
         // prevent circle from being outside the canvas
         if (movedX < internalRadius) {
             //console.log("X1: ", movedX.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStick.toFixed(1));
@@ -216,6 +235,10 @@ const JoyStick = (function (container, parameters, callback) {
         if ( (centerY-movedY) > maxMoveStick) movedY = centerY - maxMoveStick;
 
         context.arc(movedX, movedY, internalRadius, 0, circumference, false);
+        if (joystickLevels == 2) {
+            context.arc(movedX-internalRadius+internalRadiusLev2 + movedXLev2, movedY-internalRadius+internalRadiusLev2 + movedYLev2,
+              internalRadiusLev2, 0, circumference, false);
+        }
         // create radial gradient
         const grd = context.createRadialGradient(centerX, centerY, 5, centerX, centerY, 200);
         // Light color
@@ -250,7 +273,7 @@ const JoyStick = (function (container, parameters, callback) {
      * @desc Events for manage mouse and touch
      */
     function onTouchStart(event) {
-        onMouseDown(event);
+        onMouseDown(event, 0);
     }
     function onTouchMove(event) {
         if (event.targetTouches[0].target === canvas) {
@@ -260,15 +283,18 @@ const JoyStick = (function (container, parameters, callback) {
     function onTouchEnd(event) {
         onMouseUp(event);
     }
-    function onMouseDown(event) {
-        const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
-        pressedX = loc.x - movedX;  // pressed position relative to the circle
-        pressedY = loc.y - movedY;
-        if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
-            pressed = 1;
-        } else {
-            pressedX = null;
-            pressedY = null;
+    function onMouseDown(event, button=null) {
+        if (isNullOrUndef(button)) button = event.button;
+        if (button==0) {  // 0 is left click, 1 is middle, 2 is right click
+            const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+            pressedX = loc.x - movedX;  // pressed position relative to the circle
+            pressedY = loc.y - movedY;
+            if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
+                pressed = 1;
+            } else {
+                pressedX = null;
+                pressedY = null;
+            }
         }
 
     }
@@ -297,7 +323,6 @@ const JoyStick = (function (container, parameters, callback) {
                 movedX = loc.x;
                 movedY = loc.y;
             }
-
             redraw();
 
             // Set attribute of callback
@@ -368,10 +393,27 @@ const JoyStick = (function (container, parameters, callback) {
     };
     /**
      * @desc Get the parameters that were calculated initially during setting up the object
+     * @return {autoReturnToCenter: boolean|boolean|*, centerY: number, centerX: number, maxMoveStick: *, title: string|string|*, startNormX: number|number|*, startNormY: number|number|*, directionHorizontalLimitPos: number, internalFillColor: string|*, externalRadius: *, directionHorizontalLimitNeg: number, height: number|*, moveRelativeToInitialMouseDown: boolean|boolean|*, internalRadius: number|number|*, internalLineWidth: number|*, externalLineWidth: number|*, circumference: number, width: number|*, externalStrokeColor: string|*, startY: number, directionVerticalLimitNeg: number, startX: number, maxMoveStickBeyondInternalRadius: number|number|*, internalStrokeColor: string|*, radiiDifference: number|number|*, directionVerticalLimitPos: number}
+     */
+    this.GetSetupParameters = function() {
+        return setupParameters;
+    };
+    /**
+     * @desc Get the parameters that were calculated initially during setting up the object
      * @return dict
      */
-    this.GetStartingParameters = function() {
-        return startingParameters;
+    this.GetWorkingParameters = function() {
+        return {
+            movedX: movedX,
+            movedY: movedY,
+            movedXLev2: movedXLev2,
+            movedYLev2: movedYLev2,
+            pressed: pressed,
+            pressedX: pressedX,
+            pressedY: pressed,
+            width: width,
+            height: height,
+        };
     };
 
     /**
