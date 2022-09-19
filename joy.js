@@ -108,8 +108,8 @@ const JoyStick = (function (container, parameters, callback) {
     callback = callback || ( function (StickStatus) { } );
 
     const maxMoveStickLev2 = internalRadius-2*internalRadiusLev2; // 2 because one on each side
-    const startNormXLev2 = 1.;
-    const startNormYLev2 = 0.25;
+    const startNormXLev2 = 0.5;
+    const startNormYLev2 = 0.5;
 
     // Create Canvas element and add it in the Container object
     const canvas = document.createElement("canvas");
@@ -125,8 +125,8 @@ const JoyStick = (function (container, parameters, callback) {
     const circumference = 2 * Math.PI;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const centerXLev2 = maxMoveStickLev2 / 2;
-    const centerYLev2 = 0;
+    const centerXLev2 = maxMoveStickLev2;
+    const centerYLev2 = maxMoveStickLev2;
     const directionHorizontalLimitPos = canvas.width / 10;
     const directionHorizontalLimitNeg = directionHorizontalLimitPos * -1;
     const directionVerticalLimitPos = canvas.height / 10;
@@ -228,15 +228,26 @@ const JoyStick = (function (container, parameters, callback) {
             //console.log("Y2: ", movedY.toFixed(2) + " > " + (canvas.height-internalRadius).toFixed(2) + " -->" + (canvas.height-maxMoveStick).toFixed(1));
             movedY = canvas.height - internalRadius;
         }
+
         // prevent the circle from being beyond maxMoveStick
         if ( (movedX-centerX) > maxMoveStick) movedX = centerX + maxMoveStick;
         if ( (centerX-movedX) > maxMoveStick) movedX = centerX - maxMoveStick;
         if ( (movedY-centerY) > maxMoveStick) movedY = centerY + maxMoveStick;
         if ( (centerY-movedY) > maxMoveStick) movedY = centerY - maxMoveStick;
 
+        if (joystickLevels===2) {
+            // prevent the level 2 circle from being beyond maxMoveStickLev2
+            if ( movedXLev2-centerXLev2 > maxMoveStickLev2) movedXLev2 = centerXLev2 + maxMoveStickLev2;
+            if ( centerXLev2-movedXLev2 > maxMoveStickLev2) movedXLev2 = centerXLev2 - maxMoveStickLev2;
+            if ( movedYLev2-centerYLev2 > maxMoveStickLev2) movedYLev2 = centerYLev2 + maxMoveStickLev2;
+            if ( centerYLev2-movedYLev2 > maxMoveStickLev2) movedYLev2 = centerYLev2 - maxMoveStickLev2;
+        }
+
         context.arc(movedX, movedY, internalRadius, 0, circumference, false);
-        if (joystickLevels == 2) {
-            context.arc(movedX-internalRadius+internalRadiusLev2 + movedXLev2, movedY-internalRadius+internalRadiusLev2 + movedYLev2,
+        if (joystickLevels===2) {
+            context.arc(
+              movedX + movedXLev2-centerXLev2,
+              movedY + movedYLev2-centerYLev2,
               internalRadiusLev2, 0, circumference, false);
         }
         // create radial gradient
@@ -447,43 +458,66 @@ const JoyStick = (function (container, parameters, callback) {
     this.GetPosY = function () {
         return movedY;
     };
-
     /**
-     * @desc Normalizzed value of X move of stick
-     * @return Integer from -100 to +100
+     * @desc The X and Y positions of the cursor relative to the canvas that contains it and to its dimensions
+     * @return Array of numbers that indicate relative position
      */
-    this.GetX = function () {
-        return (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
+    this.GetPos = function() {
+        return [movedX, movedY];
+    }
+    this.SetPos = function (posX, posY, doRedraw=true) {
+        if (!isNullOrUndef(posX)) movedX = posX;
+        if (!isNullOrUndef(posY)) movedY = posY;
+        if (doRedraw) redraw();
+        return [movedX, movedY];
+    };
+
+    this.GetPosLev2 = function() {
+        return [movedXLev2, movedYLev2];
+    }
+    this.SetPosLev2 = function (posXLev2, posYLev2, doRedraw=true) {
+        if (!isNullOrUndef(posXLev2)) movedXLev2 = posXLev2;
+        if (!isNullOrUndef(posYLev2)) movedYLev2 = posYLev2;
+        if (doRedraw) redraw();
+        return [movedXLev2, movedYLev2];
     };
 
     /**
-     * @desc Normalized value of Y move of stick
-     * @return Integer from -100 to +100
-     */
-    this.GetY = function () {
-        return ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
-    };
-
-    /**
-     * @desc Normalizzed value of X move of stick
+     * @desc Normalized value of X move of stick
      * @return Float from 0 to 1
      */
-    this.GetNormX = function () {
+    this.GetNormLocX = function () {
         return (1 + (movedX - centerX) / maxMoveStick)/2.0;
     };
-
     /**
      * @desc Normalized value of Y move of stick
      * @return Float from 0 to 1
      */
-    this.GetNormY = function () {
+    this.GetNormLocY = function () {
         return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
     };
-    this.SetNormX = function (normX, doRedraw=true) {
+    /**
+     * @desc Normalized value of X and Y move of stick
+     * @return Array of floats from 0 to 1
+     */
+    this.GetNormLoc = function () {
+        return [this.GetNormLocX(), this.GetNormLocY()];
+    };
+    this.GetNormLocXLev2 = function () {
+        return (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
+    };
+    this.GetNormLocYLev2 = function () {
+        return (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
+    };
+    this.GetNormLocLev2 = function () {
+        return [this.GetNormLocXLev2(), this.GetNormLocYLev2()];
+    };
+
+    this.SetNormLocX = function (normX, doRedraw=true) {
         this.SetNormLoc(normX, null, doRedraw);
         return movedX
     };
-    this.SetNormY = function (normY, doRedraw=true) {
+    this.SetNormLocY = function (normY, doRedraw=true) {
         this.SetNormLoc(null, normY, doRedraw);
         return movedY;
     };
@@ -493,6 +527,42 @@ const JoyStick = (function (container, parameters, callback) {
         if (doRedraw) redraw();
         return [movedX, movedY];
     };
+    this.SetNormLocLev2 = function (normXLev2, normYLev2, doRedraw=true) {
+        if (!isNullOrUndef(normXLev2)) movedXLev2 = centerXLev2 + maxMoveStickLev2*(2*normXLev2 - 1);
+        if (!isNullOrUndef(normYLev2)) movedYLev2 = centerYLev2 - maxMoveStickLev2*(2*normYLev2 - 1);
+        if (doRedraw) redraw();
+        return [movedXLev2, movedYLev2];
+    };
+
+    /**
+     * @desc value of X move of stick
+     * @return Integer from -100 to +100
+     */
+    this.GetLocX = function () {
+        return (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
+    };
+    /**
+     * @desc value of Y move of stick
+     * @return Integer from -100 to +100
+     */
+    this.GetLocY = function () {
+        return ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
+    };
+    /**
+     * @desc value of X and Y move of stick
+     * @return Array of integers from -100 to +100
+     */
+    this.GetLoc = function () {
+        return [this.GetLocX(), this.GetLocY()];
+    };
+
+    this.GetNormX = this.GetNormLocX;
+    this.GetNormY = this.GetNormLocY;
+    this.SetNormX = this.SetNormLocX;
+    this.SetNormY = this.SetNormLocY;
+    this.GetX = this.GetLocX;
+    this.GetY = this.GetLocY;
+
     /**
      * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
      * @return String of cardinal point N, NE, E, SE, S, SW, W, NW and C when it is placed in the center
