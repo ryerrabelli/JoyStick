@@ -54,6 +54,7 @@ let StickStatus = {
     y: 0,
     xNorm: 0,
     yNorm: 0,
+
     cardinalDirection: "C",
 };
 
@@ -122,6 +123,9 @@ const JoyStick = (function (container, parameters, callback) {
     let pressed = 0; // Bool - 1=Yes - 0=No
     let pressedX = null;
     let pressedY = null;
+    let pressedLev2 = 0;
+    let pressedXLev2 = null;
+    let pressedYLev2 = null;
     const circumference = 2 * Math.PI;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -256,6 +260,7 @@ const JoyStick = (function (container, parameters, callback) {
         context.arc(movedX, movedY, internalRadius, 0, circumference, false);
         context.fill();
         context.stroke();
+
         if (joystickLevels===2) {
             context.beginPath();
             context.arc(
@@ -276,13 +281,23 @@ const JoyStick = (function (container, parameters, callback) {
         drawInternal();
     }
     
-    function updateStickStatus(movedX, movedY) {
+    function updateStickStatus(movedX, movedY, movedXLev2=null, movedYLev2=null) {
         StickStatus.xPosition = movedX;
         StickStatus.yPosition = movedY;
-        StickStatus.x = (100 * (movedX - centerX) / maxMoveStick).toFixed();
-        StickStatus.y = (100 * (movedY - centerY) / maxMoveStick * -1).toFixed();
+        StickStatus.x =   (100 * (movedX - centerX) / maxMoveStick).toFixed();
+        StickStatus.y =   (100 * (movedY - centerY) / maxMoveStick  * -1).toFixed();
         StickStatus.xNorm = (1 + (movedX - centerX) / maxMoveStick)/2.0;
         StickStatus.yNorm = (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
+
+        if (!isNullOrUndef(movedXLev2) && !isNullOrUndef(movedYLev2)) {
+            StickStatus.xPositionLev2 = movedXLev2;
+            StickStatus.yPositionLev2 = movedYLev2;
+            StickStatus.xLev2 =   (100 * (movedXLev2 - centerXLev2) / maxMoveStickLev2).toFixed();
+            StickStatus.yLev2 =   (100 * (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1).toFixed();
+            StickStatus.xNormLev2 = (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
+            StickStatus.yNormLev2 = (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
+        }
+
         StickStatus.cardinalDirection = getCardinalDirection();
     }
     /**
@@ -301,15 +316,31 @@ const JoyStick = (function (container, parameters, callback) {
     }
     function onMouseDown(event, button=null) {
         if (isNullOrUndef(button)) button = event.button;
-        if (button==0) {  // 0 is left click, 1 is middle, 2 is right click
+        if (button===0) {  // 0 is left click, 1 is middle, 2 is right click
             const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
             pressedX = loc.x - movedX;  // pressed position relative to the circle
             pressedY = loc.y - movedY;
-            if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
+            pressedXLev2 = loc.x - movedX + centerXLev2 - movedXLev2;  // pressed position relative to the circle
+            pressedYLev2 = loc.y - movedY + centerYLev2 - movedYLev2;
+            console.log(pressedX.toFixed(1), pressedY.toFixed(1), pressedXLev2.toFixed(1), pressedYLev2.toFixed(1));
+
+            if (Math.abs(pressedXLev2) <= internalRadiusLev2  && Math.abs(pressedYLev2) <= internalRadiusLev2) {
+                // clicked level 2 circle
+                pressed = 0;
+                pressedLev2 = 1;
+                pressedX = null;
+                pressedY = null;
+            } else if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
+                // clicked level 1 circle (or area around it if moveRelativeToInitialMouseDown is false)
                 pressed = 1;
+                pressedLev2 = 0;
+                pressedXLev2 = null;
+                pressedYLev2 = null;
             } else {
                 pressedX = null;
                 pressedY = null;
+                pressedXLev2 = null;
+                pressedYLev2 = null;
             }
         }
 
@@ -330,19 +361,29 @@ const JoyStick = (function (container, parameters, callback) {
     }
     /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
     function onMouseMove(event) {
-        if (pressed === 1) {
+        if (pressed===1 || pressedLev2===1) {
             const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
-            if (moveRelativeToInitialMouseDown) {
-                movedX = loc.x - pressedX;
-                movedY = loc.y - pressedY;
-            } else {
-                movedX = loc.x;
-                movedY = loc.y;
+            if (pressedLev2===1) {
+                //movedXLev2 = loc.x - movedX + centerXLev2 - movedXLev2;
+                //movedYLev2 = loc.y - movedY + centerYLev2 - movedYLev2;
+                //movedXLev2 = loc.x - pressedXLev2;
+                //movedYLev2 = loc.y - pressedYLev2;
+                movedXLev2 = loc.x - movedX + centerXLev2 - pressedXLev2;
+                movedYLev2 = loc.y - movedY + centerYLev2 - pressedYLev2;
+            } else if (pressed===1) {
+                if (moveRelativeToInitialMouseDown) {
+                    movedX = loc.x - pressedX;
+                    movedY = loc.y - pressedY;
+                } else {
+                    movedX = loc.x;
+                    movedY = loc.y;
+                }
             }
+
             redraw();
 
             // Set attribute of callback
-            updateStickStatus(movedX, movedY);
+            updateStickStatus(movedX, movedY, movedXLev2, movedYLev2);
             callback(StickStatus);
         }
     }
@@ -351,6 +392,9 @@ const JoyStick = (function (container, parameters, callback) {
         pressed = 0;
         pressedX = null;
         pressedY = null;
+        pressedLev2 = 0;
+        pressedXLev2 = null;
+        pressedYLev2 = null;
         // If required reset position store variable
         if (autoReturnToCenter) {
             movedX = startX;
@@ -359,7 +403,7 @@ const JoyStick = (function (container, parameters, callback) {
         redraw();
 
         // Set attribute of callback
-        updateStickStatus(movedX, movedY);
+        updateStickStatus(movedX, movedY, movedXLev2, movedYLev2);
         callback(StickStatus);
     }
 
