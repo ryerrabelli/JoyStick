@@ -243,24 +243,29 @@ const JoyStick = (function (container, parameters, callback) {
             if ( centerYLev2-movedYLev2 > maxMoveStickLev2) movedYLev2 = centerYLev2 - maxMoveStickLev2;
         }
 
-        context.arc(movedX, movedY, internalRadius, 0, circumference, false);
-        if (joystickLevels===2) {
-            context.arc(
-              movedX + movedXLev2-centerXLev2,
-              movedY + movedYLev2-centerYLev2,
-              internalRadiusLev2, 0, circumference, false);
-        }
-        // create radial gradient
+        // create radial gradient for fill color
         const grd = context.createRadialGradient(centerX, centerY, 5, centerX, centerY, 200);
         // Light color
         grd.addColorStop(0, internalFillColor);
         // Dark color
         grd.addColorStop(1, internalStrokeColor);
         context.fillStyle = grd;
-        context.fill();
         context.lineWidth = internalLineWidth;
         context.strokeStyle = internalStrokeColor;
+
+        context.arc(movedX, movedY, internalRadius, 0, circumference, false);
+        context.fill();
         context.stroke();
+        if (joystickLevels===2) {
+            context.beginPath();
+            context.arc(
+              movedX + movedXLev2-centerXLev2,
+              movedY + movedYLev2-centerYLev2,
+              internalRadiusLev2, 0, circumference, false);
+            context.fill();
+            context.stroke();
+        }
+
     }
 
     function redraw() {
