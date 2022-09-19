@@ -317,21 +317,24 @@ const JoyStick = (function (container, parameters, callback) {
     function onMouseDown(event, button=null) {
         if (isNullOrUndef(button)) button = event.button;
         if (button===0) {  // 0 is left click, 1 is middle, 2 is right click
-            const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+            const locs = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+            const loc = locs[0];
             pressedX = loc.x - movedX;  // pressed position relative to the circle
             pressedY = loc.y - movedY;
-            pressedXLev2 = loc.x - movedX + centerXLev2 - movedXLev2;  // pressed position relative to the circle
-            pressedYLev2 = loc.y - movedY + centerYLev2 - movedYLev2;
-            console.log(pressedX.toFixed(1), pressedY.toFixed(1), pressedXLev2.toFixed(1), pressedYLev2.toFixed(1));
-
+            if (joystickLevels===2) {
+                const locLev2 = locs[1];
+                pressedXLev2 = locLev2.x- movedXLev2;  // pressed position relative to the circle
+                pressedYLev2 = locLev2.y - movedYLev2;
+            }
+            
             if (Math.abs(pressedXLev2) <= internalRadiusLev2  && Math.abs(pressedYLev2) <= internalRadiusLev2) {
-                // clicked level 2 circle
+                // clicked level 2 joystick
                 pressed = 0;
                 pressedLev2 = 1;
                 pressedX = null;
                 pressedY = null;
             } else if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
-                // clicked level 1 circle (or area around it if moveRelativeToInitialMouseDown is false)
+                // clicked level 1 joystick (or area around it if moveRelativeToInitialMouseDown is false)
                 pressed = 1;
                 pressedLev2 = 0;
                 pressedXLev2 = null;
@@ -357,20 +360,24 @@ const JoyStick = (function (container, parameters, callback) {
             correctedX = uncorrectedX - canvas.offsetParent.offsetLeft;
             correctedX = uncorrectedY - canvas.offsetParent.offsetTop;
         }
-        return {x: correctedX, y: correctedY}
+        let correctedPositions =  [ {
+            x: correctedX,
+            y: correctedY,
+        } ];
+        if (joystickLevels===2) {
+            correctedPositions.push({
+                x: correctedX - movedX + centerXLev2,
+                y: correctedY - movedY + centerYLev2,
+            });
+        }
+        return correctedPositions;
     }
     /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
     function onMouseMove(event) {
         if (pressed===1 || pressedLev2===1) {
-            const loc = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
-            if (pressedLev2===1) {
-                //movedXLev2 = loc.x - movedX + centerXLev2 - movedXLev2;
-                //movedYLev2 = loc.y - movedY + centerYLev2 - movedYLev2;
-                //movedXLev2 = loc.x - pressedXLev2;
-                //movedYLev2 = loc.y - pressedYLev2;
-                movedXLev2 = loc.x - movedX + centerXLev2 - pressedXLev2;
-                movedYLev2 = loc.y - movedY + centerYLev2 - pressedYLev2;
-            } else if (pressed===1) {
+            const locs = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+            if (pressed===1) {
+                const loc = locs[0];
                 if (moveRelativeToInitialMouseDown) {
                     movedX = loc.x - pressedX;
                     movedY = loc.y - pressedY;
@@ -378,6 +385,10 @@ const JoyStick = (function (container, parameters, callback) {
                     movedX = loc.x;
                     movedY = loc.y;
                 }
+            } else if (joystickLevels===2 && pressedLev2===1) {
+                const locLev2 = locs[1];
+                movedXLev2 = locLev2.x - pressedXLev2;
+                movedYLev2 = locLev2.y - pressedYLev2;
             }
 
             redraw();
