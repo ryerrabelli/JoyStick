@@ -513,70 +513,83 @@ const JoyStick = function (container, parameters, callback) {
    * @desc The X position of the cursor relative to the canvas that contains it and to its dimensions
    * @return Number that indicate relative position
    */
-  this.GetRawLocX = function () {
-    return movedX;
+  this.GetRawLocX = function ({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return movedX;
+    else if (level>=1) return movedXLev2;
+
   };
 
   /**
    * @desc The Y position of the cursor relative to the canvas that contains it and to its dimensions
    * @return Number that indicates relative position
    */
-  this.GetRawLocY = function () {
-    return movedY;
+  this.GetRawLocY = function ({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return movedY;
+    else if (level>=1) return movedYLev2;
   };
   /**
    * @desc The X and Y positions of the cursor relative to the canvas that contains it and to its dimensions
    * @return Array of numbers that indicate relative position
    */
-  this.GetRawLoc = function() {
-    return [movedX, movedY];
+  this.GetRawLoc = function({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return [movedX, movedY];
+    else if (level>=1) return [movedXLev2, movedYLev2];
   }
-  this.SetRawLoc = function (rawLocX, rawLocY, doRedraw=true) {
-    if (!isNullOrUndef(rawLocX)) movedX = rawLocX;
-    if (!isNullOrUndef(rawLocY)) movedY = rawLocY;
-    if (doRedraw) redraw();
-    return [movedX, movedY];
+  this.SetRawLoc = function (rawLocX, rawLocY, {doRedraw=true, level=0}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      if (!isNullOrUndef(rawLocX)) movedX = rawLocX;
+      if (!isNullOrUndef(rawLocY)) movedY = rawLocY;
+      if (doRedraw) redraw();
+      return [movedX, movedY];
+    } else if (level>=1) {
+      if (!isNullOrUndef(rawLocX)) movedXLev2 = rawLocX;
+      if (!isNullOrUndef(rawLocY)) movedYLev2 = rawLocY;
+      if (doRedraw) redraw();
+      return [movedXLev2, movedYLev2];
+    }
+
+
   };
 
   this.GetRawLocLev2 = function() {
-    return [movedXLev2, movedYLev2];
+    return this.GetRawLoc({level:1});
   }
   this.SetRawLocLev2 = function (rawLocXLev2, rawLocYLev2, doRedraw=true) {
-    if (!isNullOrUndef(rawLocXLev2)) movedXLev2 = rawLocXLev2;
-    if (!isNullOrUndef(rawLocYLev2)) movedYLev2 = rawLocYLev2;
-    if (doRedraw) redraw();
-    return [movedXLev2, movedYLev2];
+    return this.SetRawLoc(rawLocXLev2,rawLocYLev2,{doRedraw: doRedraw, level:1});
   };
 
   /**
    * @desc Normalized value of X move of stick
    * @return Float from 0 to 1
    */
-  this.GetNormLocX = function () {
-    return (1 + (movedX - centerX) / maxMoveStick)/2.0;
+  this.GetNormLocX = function ({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return (1 + (movedX - centerX) / maxMoveStick)/2.0;
+    else if (level>=1) return (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
   };
   /**
    * @desc Normalized value of Y move of stick
    * @return Float from 0 to 1
    */
-  this.GetNormLocY = function () {
-    return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
+  this.GetNormLocY = function ({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return (1 + (movedY - centerY) / maxMoveStick  * -1)/2.0;
+    else if (level>=1) return (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
   };
   /**
    * @desc Normalized value of X and Y move of stick
    * @return Array of floats from 0 to 1
    */
-  this.GetNormLoc = function () {
-    return [this.GetNormLocX(), this.GetNormLocY()];
+  this.GetNormLoc = function ({level=0}={}) {
+    if (isNullOrUndef(level) || level===0) return [this.GetNormLocX(), this.GetNormLocY()];
+    else if (level>=1) return [this.GetNormLocXLev2(), this.GetNormLocYLev2()];
   };
   this.GetNormLocXLev2 = function () {
-    return (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
+    return this.GetNormLocX({level:1});
   };
   this.GetNormLocYLev2 = function () {
-    return (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
+    return this.GetNormLocY({level:1});
   };
   this.GetNormLocLev2 = function () {
-    return [this.GetNormLocXLev2(), this.GetNormLocYLev2()];
+    return this.GetNormLoc({level:1});
   };
   this.GetNormLocLevCombined = function() {
     const relativeJoystickPower = 0.2;
@@ -593,29 +606,34 @@ const JoyStick = function (container, parameters, callback) {
   }
 
   this.SetNormLocX = function (normX, doRedraw=true) {
-    this.SetNormLoc(normX, null, doRedraw);
+    this.SetNormLoc(normX, null, {doRedraw:doRedraw}={});
     return movedX
   };
   this.SetNormLocY = function (normY, doRedraw=true) {
-    this.SetNormLoc(null, normY, doRedraw);
+    this.SetNormLoc(null, normY, {doRedraw:doRedraw}={});
     return movedY;
   };
-  this.SetNormLoc = function (normX, normY, doRedraw=true) {
-    if (!isNullOrUndef(normX)) {
+  this.SetNormLoc = function (normX, normY, {doRedraw = true, level=0}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      if (!isNullOrUndef(normX)) {
+        movedX = centerX + maxMoveStick*(2*normX - 1);
+      }
+      if (!isNullOrUndef(normY)) {
+        movedY = centerY - maxMoveStick*(2*normY - 1);
+      }
+      if (doRedraw) redraw();
+      return [movedX, movedY];
+    } else if (level>=1) {
+      if (!isNullOrUndef(normX)) movedXLev2 = centerXLev2 + maxMoveStickLev2*(2*normX - 1);
+      if (!isNullOrUndef(normY)) movedYLev2 = centerYLev2 - maxMoveStickLev2*(2*normY - 1);
+      if (doRedraw) redraw();
+      return [movedXLev2, movedYLev2];
+    }
 
-      movedX = centerX + maxMoveStick*(2*normX - 1);
-    }
-    if (!isNullOrUndef(normY)) {
-      movedY = centerY - maxMoveStick*(2*normY - 1);
-    }
-    if (doRedraw) redraw();
-    return [movedX, movedY];
+
   };
   this.SetNormLocLev2 = function (normXLev2, normYLev2, doRedraw=true) {
-    if (!isNullOrUndef(normXLev2)) movedXLev2 = centerXLev2 + maxMoveStickLev2*(2*normXLev2 - 1);
-    if (!isNullOrUndef(normYLev2)) movedYLev2 = centerYLev2 - maxMoveStickLev2*(2*normYLev2 - 1);
-    if (doRedraw) redraw();
-    return [movedXLev2, movedYLev2];
+    this.SetNormLoc(normXLev2,normYLev2,{doRedraw: doRedraw, level: 1})
   };
 
   /**
