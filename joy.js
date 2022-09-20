@@ -351,30 +351,6 @@ const JoyStick = function (container, parameters, callback) {
     }
 
   }
-  function getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
-    // uncorrected coordinates are relative to the entire webpage
-    // corrected is relative to the canvas
-    let correctedX, correctedY;
-    // Manage offset
-    if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
-      correctedX = uncorrectedX - canvas.offsetLeft;
-      correctedY = uncorrectedY - canvas.offsetTop;
-    } else {
-      correctedX = uncorrectedX - canvas.offsetParent.offsetLeft;
-      correctedX = uncorrectedY - canvas.offsetParent.offsetTop;
-    }
-    let correctedPositions =  [ {
-      x: correctedX,
-      y: correctedY,
-    } ];
-    if (joystickLevels===2) {
-      correctedPositions.push({
-        x: correctedX - movedX + centerXLev2,
-        y: correctedY - movedY + centerYLev2,
-      });
-    }
-    return correctedPositions;
-  }
   /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
   function onMouseMove(event) {
     if (pressed===1 || pressedLev2===1) {
@@ -401,7 +377,6 @@ const JoyStick = function (container, parameters, callback) {
       callback(StickStatus);
     }
   }
-
   function onMouseUp(event) {
     pressed = 0;
     pressedX = null;
@@ -420,7 +395,35 @@ const JoyStick = function (container, parameters, callback) {
     updateStickStatus(movedX, movedY, movedXLev2, movedYLev2);
     callback(StickStatus);
   }
+  function getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
+    // uncorrected coordinates are relative to the entire webpage
+    // corrected is relative to the canvas
+    let correctedX, correctedY;
+    // Manage offset
+    if (canvas.offsetParent.tagName.toUpperCase() === "BODY") {
+      correctedX = uncorrectedX - canvas.offsetLeft;
+      correctedY = uncorrectedY - canvas.offsetTop;
+    } else {
+      correctedX = uncorrectedX - canvas.offsetParent.offsetLeft;
+      correctedX = uncorrectedY - canvas.offsetParent.offsetTop;
+    }
+    let correctedPositions =  [ {
+      x: correctedX,
+      y: correctedY,
+    } ];
+    if (joystickLevels===2) {
+      correctedPositions.push({
+        x: correctedX - movedX + centerXLev2,
+        y: correctedY - movedY + centerYLev2,
+      });
+    }
+    return correctedPositions;
+  }
 
+  /**
+   *
+   * @returns {string}
+   */
   function getCardinalDirection() {
     let result = "";
     let horizontal = movedX - centerX;
@@ -516,7 +519,7 @@ const JoyStick = function (container, parameters, callback) {
 
   /**
    * @desc The Y position of the cursor relative to the canvas that contains it and to its dimensions
-   * @return Number that indicate relative position
+   * @return Number that indicates relative position
    */
   this.GetPosY = function () {
     return movedY;
