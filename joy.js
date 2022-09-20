@@ -565,24 +565,28 @@ const JoyStick = function (container, parameters, callback) {
    * @desc Normalized value of X move of stick
    * @return Float from 0 to 1
    */
-  this.GetNormLocX = function ({level=0}={}) {
-    if (isNullOrUndef(level) || level===0) return (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
+  this.GetNormLocX = function ({level=null}={}) {
+    if (isNullOrUndef(level) || level===-1) return this.GetNormLocXLevCombined();
+    if (level===0) return (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
     else if (level>=1) return (1 + (currentRawLocXLev2 - centerRawLocXLev2) / maxMoveStickLev2)/2.0;
   };
   /**
    * @desc Normalized value of Y move of stick
    * @return Float from 0 to 1
    */
-  this.GetNormLocY = function ({level=0}={}) {
-    if (isNullOrUndef(level) || level===0) return (1 + (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStick  * -1)/2.0;
+  this.GetNormLocY = function ({level=null}={}) {
+    if (isNullOrUndef(level) || level===-1) return this.GetNormLocYLevCombined();
+    if (level===0) return (1 + (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStick  * -1)/2.0;
     else if (level>=1) return (1 + (currentRawLocYLev2 - centerRawLocYLev2) / maxMoveStickLev2  * -1)/2.0;
   };
+
   /**
    * @desc Normalized value of X and Y move of stick
    * @return Array of floats from 0 to 1
    */
-  this.GetNormLoc = function ({level=0}={}) {
-    if (isNullOrUndef(level) || level===0) return [this.GetNormLocX(), this.GetNormLocY()];
+  this.GetNormLoc = function ({level=null}={}) {
+    if (isNullOrUndef(level) || level===-1) return this.GetNormLocLevCombined();
+    if (level===0) return [this.GetNormLocX(), this.GetNormLocY()];
     else if (level>=1) return [this.GetNormLocXLev2(), this.GetNormLocYLev2()];
   };
   this.GetNormLocXLev2 = function () {
@@ -594,38 +598,62 @@ const JoyStick = function (container, parameters, callback) {
   this.GetNormLocLev2 = function () {
     return this.GetNormLoc({level:1});
   };
-  this.GetNormLocLevCombined = function() {
+
+  this.GetCombinedLevValue = function(lev0, lev1) {
     const relativeJoystickPower = 0.2;
-
-    const normLocXLev0 = this.GetNormLocX();
-    const normLocYLev0 = this.GetNormLocY();
-    const normLocXLev2 = this.GetNormLocXLev2();
-    const normLocYLev2 = this.GetNormLocYLev2();
-
     // create weighted sum value, then divide by max possible value
-    const normLocXLevCombined = (normLocXLev0 + normLocXLev2*relativeJoystickPower) / (1+relativeJoystickPower);
-    const normLocYLevCombined = (normLocYLev0 + normLocYLev2*relativeJoystickPower) / (1+relativeJoystickPower);
-    return [normLocXLevCombined, normLocYLevCombined];
+    return (lev0 + lev1*relativeJoystickPower) / (1+relativeJoystickPower);
+  }
+  this.GetNormLocXLevCombined = function() {
+    const normLocXLevCombined = this.GetCombinedLevValue(
+      this.GetNormLocX({level:0}),
+      this.GetNormLocX({level:1})
+    );
+    return normLocXLevCombined;
+  }
+  this.GetNormLocYLevCombined = function() {
+    const normLocYLevCombined = this.GetCombinedLevValue(
+      this.GetNormLocY({level:0}),
+      this.GetNormLocY({level:1})
+    );
+    return normLocYLevCombined;
+  }
+  this.GetNormLocLevCombined = function() {
+    return [this.GetNormLocXLevCombined, this.GetNormLocYLevCombined()];
   }
 
   this.SetNormLocX = function (normX, doRedraw=true) {
     this.SetNormLoc(normX, null, {doRedraw:doRedraw}={});
-    return currentRawLocXLev0
+    return currentRawLocXLev0;
   };
   this.SetNormLocY = function (normY, doRedraw=true) {
     this.SetNormLoc(null, normY, {doRedraw:doRedraw}={});
     return currentRawLocYLev0;
   };
-  this.SetNormLoc = function (normX, normY, {doRedraw = true, level=0}={}) {
-    if (isNullOrUndef(level) || level===0) {
+  this.SetNormLoc = function (normX, normY, {doRedraw = true, level=null}={}) {
+    if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
       if (!isNullOrUndef(normX)) {
-        currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normX - 1);
+        let normLocXLevCombined = this.GetNormLocXLevCombined();
+        if (Math.abs(normLocXLevCombined-currentRawLocXLev0)>0.6)
+          currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normX - 1);
       }
+
       if (!isNullOrUndef(normY)) {
-        currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
+        let normLocYLevCombined = this.GetNormLocYLevCombined();
+        if (Math.abs(normLocYLevCombined-currentRawLocYLev0)>0.6)
+          currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
       }
       if (doRedraw) redraw();
+      return this.GetNormLocLevCombined();
+
+
+
+    } else if (level===0) {
+      if (!isNullOrUndef(normX)) currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normX - 1);
+      if (!isNullOrUndef(normY)) currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
+      if (doRedraw) redraw();
       return [currentRawLocXLev0, currentRawLocYLev0];
+
     } else if (level>=1) {
       if (!isNullOrUndef(normX)) currentRawLocXLev2 = centerRawLocXLev2 + maxMoveStickLev2*(2*normX - 1);
       if (!isNullOrUndef(normY)) currentRawLocYLev2 = centerRawLocYLev2 - maxMoveStickLev2*(2*normY - 1);
