@@ -123,10 +123,9 @@ const JoyStick = function (container, parameters, callback) {
   objContainer.appendChild(canvas);
   const context = canvas.getContext("2d");
 
-  let pressed = 0; // Bool - 1=Yes - 0=No
+  let pressed = -1; //  -1 means not pressed, 0 means level 0 pressed, 1 means level 1/2 pressed
   let pressedX = null;
   let pressedY = null;
-  let pressedLev2 = 0;
   let pressedXLev2 = null;
   let pressedYLev2 = null;
 
@@ -336,17 +335,16 @@ const JoyStick = function (container, parameters, callback) {
 
       if (Math.abs(pressedXLev2) <= internalRadiusLev2  && Math.abs(pressedYLev2) <= internalRadiusLev2) {
         // clicked level 2 joystick
-        pressed = 0;
-        pressedLev2 = 1;
+        pressed = 1;
         pressedX = null;
         pressedY = null;
       } else if (!moveRelativeToInitialMouseDown || (Math.abs(pressedX) <= internalRadius && Math.abs(pressedY) <= internalRadius) ) {
         // clicked level 1 joystick (or area around it if moveRelativeToInitialMouseDown is false)
-        pressed = 1;
-        pressedLev2 = 0;
+        pressed = 0;
         pressedXLev2 = null;
         pressedYLev2 = null;
       } else {
+        pressed = -1;
         pressedX = null;
         pressedY = null;
         pressedXLev2 = null;
@@ -357,9 +355,9 @@ const JoyStick = function (container, parameters, callback) {
   }
   /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
   function onMouseMove(event) {
-    if (pressed===1 || pressedLev2===1) {
+    if (pressed >= 0) {
       const locs = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
-      if (pressed===1) {
+      if (pressed===0) {
         const loc = locs[0];
         if (moveRelativeToInitialMouseDown) {
           currentRawLocX = loc.x - pressedX;
@@ -368,7 +366,7 @@ const JoyStick = function (container, parameters, callback) {
           currentRawLocX = loc.x;
           currentRawLocY = loc.y;
         }
-      } else if (joystickLevels===2 && pressedLev2===1) {
+      } else if (joystickLevels===2 && pressed===1) {
         const locLev2 = locs[1];
         currentRawLocXLev2 = locLev2.x - pressedXLev2;
         currentRawLocYLev2 = locLev2.y - pressedYLev2;
@@ -382,10 +380,9 @@ const JoyStick = function (container, parameters, callback) {
     }
   }
   function onMouseUp(event) {
-    pressed = 0;
+    pressed = -1;  // -1 is not pressed
     pressedX = null;
     pressedY = null;
-    pressedLev2 = 0;
     pressedXLev2 = null;
     pressedYLev2 = null;
     // If required reset position store variable
@@ -492,7 +489,6 @@ const JoyStick = function (container, parameters, callback) {
       pressed: pressed,
       pressedX: pressedX,
       pressedY: pressedY,
-      pressedLev2: pressedLev2,
       pressedXLev2: pressedXLev2,
       pressedYLev2: pressedYLev2,
       width: width,
