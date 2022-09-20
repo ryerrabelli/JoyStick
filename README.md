@@ -23,16 +23,17 @@ Developed for Web Remote Control of Robot, the JoyStick can be used for all othe
 By using the new callback function, **introduced with version 2.0.0 of the library**, you can use the properties of the object, referenced in the callback function, to be able to access the same information that in previous versions of the library, was available only through calls to specific methods.
 The available properties are:
 
-- **xPosition** and **yPosition**: they provide the position of the cursor relative to the Canvas that contains it and to its dimensions. As it happens for the methods: GetPosX and GetPosY
+- **xPosition** and **yPosition**: they provide the position of the cursor relative to the Canvas that contains it and to its dimensions. As it happens for the methods: GetRawLocX and GetRawLocY
 - **cardinalDirection**: it provide the direction of the cursor as a string that indicates the cardinal points where this is oriented (N, NE, E, SE, S, SW, W, NW and C when it is placed in the center). As it happens for the method: GetDir
 - **x** and **y**: they provide a value between -100 to +100 ***independently*** of size of the Canvas. As it happens for the methods: GetX and GetY
 
 The old methods, the only ones available up to version 1.6.0, can still be used with the new version. Using them you can know the position of the Stick is located.
 The methods available are:
 
-- **GetPosX()** and **GetPosY()**: which return the position of the cursor relative to the Canvas that contains it and to its dimensions
-- **GetDir()**: which returns the direction of the cursor as a string that indicates the cardinal points where this is oriented (N, NE, E, SE, S, SW, W, NW and C when it is placed in the center)
-- **GetX()** and **GetY()**: which return a value between -100 to +100 ***independently*** of size of the Canvas.
+- **GetRawLocX()** and **GetRawLocY()**: which return the position of the cursor relative to the Canvas that contains it and to its dimensions
+- **GetCardinalDirection()**: which returns the direction of the cursor as a string that indicates the cardinal points where this is oriented (N, NE, E, SE, S, SW, W, NW and C when it is placed in the center)
+- **GetDirLocX()** and **GetDirLocY()**: which return a value between -100 to +100 ***independently*** of size of the 
+  Canvas.
 
 ## How to use it
 
@@ -62,7 +63,7 @@ var joy = new JoyStick('joyDiv');
 You can call one of method, explained before, that return status of Stick, for example in the ***[joy.html](http://bobboteck.github.io/joy/joy.html)*** file every 50 millisecond was called the method **GetX()** and showed the value in a textbox:
 
 ```javascript
-setInterval(function(){ x.value=joy.GetX(); }, 50);
+setInterval(function(){ x.value=joy.GetDirLocX(); }, 50);
 ```
 
 Otherwise you can use the **new callback function**, but you need to initialize the JoyStick differently, as in the example below:

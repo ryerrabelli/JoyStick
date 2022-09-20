@@ -297,8 +297,8 @@ const JoyStick = function (container, parameters, callback) {
       StickStatus.xNormLev2 = (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
       StickStatus.yNormLev2 = (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
 
-      StickStatus.xNormLevCombined = this.GetNormLocLevCombined;
-      StickStatus.yNormLevCombined = this.GetNormLocLevCombined;
+      //StickStatus.xNormLevCombined = this.GetNormLocLevCombined();
+      //StickStatus.yNormLevCombined = this.GetNormLocLevCombined();
     }
 
     StickStatus.cardinalDirection = getCardinalDirection();
@@ -513,7 +513,7 @@ const JoyStick = function (container, parameters, callback) {
    * @desc The X position of the cursor relative to the canvas that contains it and to its dimensions
    * @return Number that indicate relative position
    */
-  this.GetPosX = function () {
+  this.GetRawLocX = function () {
     return movedX;
   };
 
@@ -521,29 +521,29 @@ const JoyStick = function (container, parameters, callback) {
    * @desc The Y position of the cursor relative to the canvas that contains it and to its dimensions
    * @return Number that indicates relative position
    */
-  this.GetPosY = function () {
+  this.GetRawLocY = function () {
     return movedY;
   };
   /**
    * @desc The X and Y positions of the cursor relative to the canvas that contains it and to its dimensions
    * @return Array of numbers that indicate relative position
    */
-  this.GetPos = function() {
+  this.GetRawLoc = function() {
     return [movedX, movedY];
   }
-  this.SetPos = function (posX, posY, doRedraw=true) {
-    if (!isNullOrUndef(posX)) movedX = posX;
-    if (!isNullOrUndef(posY)) movedY = posY;
+  this.SetRawLoc = function (rawLocX, rawLocY, doRedraw=true) {
+    if (!isNullOrUndef(rawLocX)) movedX = rawLocX;
+    if (!isNullOrUndef(rawLocY)) movedY = rawLocY;
     if (doRedraw) redraw();
     return [movedX, movedY];
   };
 
-  this.GetPosLev2 = function() {
+  this.GetRawLocLev2 = function() {
     return [movedXLev2, movedYLev2];
   }
-  this.SetPosLev2 = function (posXLev2, posYLev2, doRedraw=true) {
-    if (!isNullOrUndef(posXLev2)) movedXLev2 = posXLev2;
-    if (!isNullOrUndef(posYLev2)) movedYLev2 = posYLev2;
+  this.SetRawLocLev2 = function (rawLocXLev2, rawLocYLev2, doRedraw=true) {
+    if (!isNullOrUndef(rawLocXLev2)) movedXLev2 = rawLocXLev2;
+    if (!isNullOrUndef(rawLocYLev2)) movedYLev2 = rawLocYLev2;
     if (doRedraw) redraw();
     return [movedXLev2, movedYLev2];
   };
@@ -619,39 +619,39 @@ const JoyStick = function (container, parameters, callback) {
   };
 
   /**
-   * @desc value of X move of stick
+   * @desc directional value of X move of stick
    * @return Integer from -100 to +100
    */
-  this.GetLocX = function () {
+  this.GetDirLocX = function () {
     return (100 * ((movedX - centerX) / maxMoveStick)).toFixed();
   };
   /**
-   * @desc value of Y move of stick
+   * @desc directional value of Y move of stick
    * @return Integer from -100 to +100
    */
-  this.GetLocY = function () {
+  this.GetDirLocY = function () {
     return ((100 * ((movedY - centerY) / maxMoveStick)) * -1).toFixed();
   };
   /**
-   * @desc value of X and Y move of stick
+   * @desc directional value of X and Y move of stick
    * @return Array of integers from -100 to +100
    */
-  this.GetLoc = function () {
-    return [this.GetLocX(), this.GetLocY()];
+  this.GetDirLoc = function () {
+    return [this.GetDirLocX(), this.GetDirLocY()];
   };
 
   this.GetNormX = this.GetNormLocX;
   this.GetNormY = this.GetNormLocY;
   this.SetNormX = this.SetNormLocX;
   this.SetNormY = this.SetNormLocY;
-  this.GetX = this.GetLocX;
-  this.GetY = this.GetLocY;
+  this.GetX = this.GetDirLocX;
+  this.GetY = this.GetDirLocY;
 
   /**
    * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
    * @return String of cardinal point N, NE, E, SE, S, SW, W, NW and C when it is placed in the center
    */
-  this.GetDir = function () {
+  this.GetCardinalDirection = function () {
     return getCardinalDirection();
   };
 
