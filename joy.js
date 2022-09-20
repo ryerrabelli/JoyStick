@@ -110,7 +110,7 @@ const JoyStick = (function (container, parameters, callback) {
 
     const maxMoveStickLev2 = internalRadius-2*internalRadiusLev2; // 2 because one on each side
     const startNormXLev2 = 0.5;
-    const startNormYLev2 = 0.5;
+    const startNormYLev2 = 0.0;
 
     // Create Canvas element and add it in the Container object
     const canvas = document.createElement("canvas");
@@ -280,7 +280,7 @@ const JoyStick = (function (container, parameters, callback) {
         drawExternal();
         drawInternal();
     }
-    
+
     function updateStickStatus(movedX, movedY, movedXLev2=null, movedYLev2=null) {
         StickStatus.xPosition = movedX;
         StickStatus.yPosition = movedY;
@@ -296,6 +296,9 @@ const JoyStick = (function (container, parameters, callback) {
             StickStatus.yLev2 =   (100 * (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1).toFixed();
             StickStatus.xNormLev2 = (1 + (movedXLev2 - centerXLev2) / maxMoveStickLev2)/2.0;
             StickStatus.yNormLev2 = (1 + (movedYLev2 - centerYLev2) / maxMoveStickLev2  * -1)/2.0;
+
+            StickStatus.xNormLevCombined = this.GetNormLocLevCombined;
+            StickStatus.yNormLevCombined = this.GetNormLocLevCombined;
         }
 
         StickStatus.cardinalDirection = getCardinalDirection();
@@ -304,7 +307,7 @@ const JoyStick = (function (container, parameters, callback) {
      * @desc Events for manage mouse and touch
      */
     function onTouchStart(event) {
-        onMouseDown(event, 0);
+        onMouseDown(event, 0);  // make button 0 to assume left click
     }
     function onTouchMove(event) {
         if (event.targetTouches[0].target === canvas) {
@@ -572,6 +575,19 @@ const JoyStick = (function (container, parameters, callback) {
     this.GetNormLocLev2 = function () {
         return [this.GetNormLocXLev2(), this.GetNormLocYLev2()];
     };
+    this.GetNormLocLevCombined = function() {
+        const relativeJoystickPower = 0.2;
+
+        const normLocX = this.GetNormLocX();
+        const normLocY = this.GetNormLocY();
+        const normLocXLev2 = this.GetNormLocXLev2();
+        const normLocYLev2 = this.GetNormLocYLev2();
+
+        // create weighted sum value, then divide by max possible value
+        const normLocXLevCombined = (normLocX + normLocXLev2*relativeJoystickPower) / (1+relativeJoystickPower);
+        const normLocYLevCombined = (normLocY + normLocYLev2*relativeJoystickPower) / (1+relativeJoystickPower);
+        return [normLocXLevCombined, normLocYLevCombined];
+    }
 
     this.SetNormLocX = function (normX, doRedraw=true) {
         this.SetNormLoc(normX, null, doRedraw);
@@ -582,8 +598,13 @@ const JoyStick = (function (container, parameters, callback) {
         return movedY;
     };
     this.SetNormLoc = function (normX, normY, doRedraw=true) {
-        if (!isNullOrUndef(normX)) movedX = centerX + maxMoveStick*(2*normX - 1);
-        if (!isNullOrUndef(normY)) movedY = centerY - maxMoveStick*(2*normY - 1);
+        if (!isNullOrUndef(normX)) {
+
+            movedX = centerX + maxMoveStick*(2*normX - 1);
+        }
+        if (!isNullOrUndef(normY)) {
+            movedY = centerY - maxMoveStick*(2*normY - 1);
+        }
         if (doRedraw) redraw();
         return [movedX, movedY];
     };
