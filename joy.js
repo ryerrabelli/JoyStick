@@ -48,13 +48,12 @@
  */
 
 let StickStatus = {
-  xPosition: 0,
-  yPosition: 0,
-  x: 0,
-  y: 0,
-  xNorm: 0,
-  yNorm: 0,
-
+  xPositionLev0: 0,
+  yPositionLev0: 0,
+  xLev0: 0,
+  yLev0: 0,
+  xNormLev0: 0,
+  yNormLev0: 0,
   cardinalDirection: "C",
 };
 
@@ -243,7 +242,7 @@ const JoyStick = function (container, parameters, callback) {
     if ( (centerRawLocYLev0-currentRawLocYLev0) > maxMoveStickLev0) currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStickLev0;
 
     if (joystickLevels===2) {
-      // prevent the level 2 circle from being beyond maxMoveStickLev2
+      // prevent the level 2 circle from being beyond maxMoveStickLev1
       if ( currentRawLocXLev1-centerRawLocXLev1 > maxMoveStickLev1) currentRawLocXLev1 = centerRawLocXLev1 + maxMoveStickLev1;
       if ( centerRawLocXLev1-currentRawLocXLev1 > maxMoveStickLev1) currentRawLocXLev1 = centerRawLocXLev1 - maxMoveStickLev1;
       if ( currentRawLocYLev1-centerRawLocYLev1 > maxMoveStickLev1) currentRawLocYLev1 = centerRawLocYLev1 + maxMoveStickLev1;
@@ -285,12 +284,12 @@ const JoyStick = function (container, parameters, callback) {
   }
 
   function updateStickStatus(currentRawLocXLev0, currentRawLocYLev0, currentRawLocXLev1=null, currentRawLocYLev1=null) {
-    StickStatus.xPosition = currentRawLocXLev0;
-    StickStatus.yPosition = currentRawLocYLev0;
-    StickStatus.x =   (100 * (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0).toFixed();
-    StickStatus.y =   (100 * (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStickLev0  * -1).toFixed();
-    StickStatus.xNorm = (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0)/2.0;
-    StickStatus.yNorm = (1 + (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStickLev0  * -1)/2.0;
+    StickStatus.xPositionLev0 = currentRawLocXLev0;
+    StickStatus.yPositionLev0 = currentRawLocYLev0;
+    StickStatus.xLev0 =   (100 * (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0).toFixed();
+    StickStatus.yLev0 =   (100 * (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStickLev0  * -1).toFixed();
+    StickStatus.xNormLev0 = (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0)/2.0;
+    StickStatus.yNormLev0 = (1 + (currentRawLocYLev0 - centerRawLocYLev0) / maxMoveStickLev0  * -1)/2.0;
 
     if (!isNullOrUndef(currentRawLocXLev1) && !isNullOrUndef(currentRawLocYLev1)) {
       StickStatus.xPositionLev1 = currentRawLocXLev1;
@@ -639,14 +638,14 @@ const JoyStick = function (container, parameters, callback) {
   /*
     // EQUATION REARRANGEMENT
     currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStickLev0*(2*normXLev0 - 1);
-    currentRawLocXLev2 = centerRawLocXLev2 + maxMoveStickLev0*(2*normXLev2 - 1);
+    currentRawLocXLev1 = centerRawLocXLev1 + maxMoveStickLev0*(2*normXLev1 - 1);
     normXLev0 == (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0)/2.0;
-    normXLev2 == (1 + (currentRawLocXLev2 - centerRawLocXLev2) / maxMoveStickLev2)/2.0;
+    normXLev1 == (1 + (currentRawLocXLev1 - centerRawLocXLev1) / maxMoveStickLev1)/2.0;
 
-    normLevCombined == (normLev0 + normLev2*relativeJoystickPower) / (1+relativeJoystickPower)
-    normLev0 + normLev2*relativeJoystickPower == normLevCombined * (1+relativeJoystickPower)
-    normLev0 == normLevCombined*(1+relativeJoystickPower) - normLev2*relativeJoystickPower
-    normLev2 == (normLevCombined*(1+relativeJoystickPower) - normLev0) / relativeJoystickPower
+    normLevCombined == (normLev0 + normLev1*relativeJoystickPower) / (1+relativeJoystickPower)
+    normLev0 + normLev1*relativeJoystickPower == normLevCombined * (1+relativeJoystickPower)
+    normLev0 == normLevCombined*(1+relativeJoystickPower) - normLev1*relativeJoystickPower
+    normLev1 == (normLevCombined*(1+relativeJoystickPower) - normLev0) / relativeJoystickPower
    */
   this.SetNormLoc = function (normX, normY, {doRedraw = true, level=null}={}) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
@@ -654,7 +653,7 @@ const JoyStick = function (container, parameters, callback) {
 
       if (!isNullOrUndef(normX)) {
         //const oldNormLocXLev0 = this.GetNormLocX({level:0});
-        //const oldNormLocXLev2 = this.GetNormLocX({level:1});
+        //const oldNormLocXLev1 = this.GetNormLocX({level:1});
         //const oldNormLocXLevCombined = this.GetNormLocXLevCombined();
         const oldNormLocXLev0 = (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStickLev0)/2.0;
         const oldNormLocXLev1 = (1 + (currentRawLocXLev1 - centerRawLocXLev1) / maxMoveStickLev1)/2.0;
@@ -684,16 +683,7 @@ const JoyStick = function (container, parameters, callback) {
       }
       if (doRedraw) redraw();
       const newNormLocLevCombined = this.GetNormLocLevCombined();
-      console.log(
-        normX.toFixed(3) + ", " +
-        normY.toFixed(3),
-        "    ",
-        newNormLocLevCombined[0].toFixed(3) + ", " +
-        newNormLocLevCombined[1].toFixed(3),
-      );
       return newNormLocLevCombined;
-
-
 
     } else if (level===0) {
       if (!isNullOrUndef(normX)) currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStickLev0*(2*normX - 1);
