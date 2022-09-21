@@ -59,7 +59,7 @@ let StickStatus = {
 
 /**
  * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
- * @costructor
+ * @constructor
  * @param container {String} - HTML object that contains the Joystick
  * @param parameters (optional) - object with following keys:
  *  title {String} (optional) - The ID of canvas (Default value is 'joystick')
@@ -76,6 +76,8 @@ let StickStatus = {
 const JoyStick = function (container, parameters, callback) {
   const givenParameters = Object.assign({}, parameters);   // clone dict
   parameters = parameters || {};
+  callback = callback || ( function (StickStatus) { } );
+
   const title = (typeof parameters.title === "undefined" ? "joystick" : parameters.title);
   let width = (typeof parameters.width === "undefined" ? 0 : parameters.width),
     height = (typeof parameters.height === "undefined" ? 0 : parameters.height);
@@ -92,27 +94,28 @@ const JoyStick = function (container, parameters, callback) {
     internalStrokeColor = (typeof parameters.internalStrokeColor === "undefined" ? "#003300" : parameters.internalStrokeColor),
     externalLineWidth = (typeof parameters.externalLineWidth === "undefined" ? 2 : parameters.externalLineWidth),
     externalStrokeColor = (typeof parameters.externalStrokeColor === "undefined" ? "#008000" : parameters.externalStrokeColor),
-    autoReturnToCenter = (typeof parameters.autoReturnToCenter === "undefined" ? true : parameters.autoReturnToCenter);
-  // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
-  const startNormLocX = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
-    startNormLocY = (typeof parameters.startNormLocY === "undefined" ? 0.5 : parameters.startNormLocY);
-  const radiiDifference = (typeof parameters.radiiDifference === "undefined" ? 30 : parameters.radiiDifference);
-  const internalRadius = (typeof parameters.internalRadius === "undefined" ? (width - (width/2 + 10) - radiiDifference) / 2 : parameters.internalRadius);
-  const joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
-  const internalRadiusLev1 = (typeof parameters.internalRadiusLev1 === "undefined" ? internalRadius/5 : parameters.internalRadiusLev1);
-  const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadius + radiiDifference : parameters.externalRadius);
-  const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
-  // maxMoveStick is how far from the center the joystick can move
-  const maxMoveStickLev0 = (typeof parameters.maxMoveStick === "undefined" ? internalRadius + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
-  const moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
+    autoReturnToCenter = (typeof parameters.autoReturnToCenter === "undefined" ? true : parameters.autoReturnToCenter),
+    moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
 
-  const maxMoveStickLev1 = (typeof parameters.maxMoveStickLev1 === "undefined" ?
-    internalRadius-2*internalRadiusLev1 :  // default has subtraction multiplied by 2 because one on each side
-    parameters.maxMoveStickLev1);
+  const joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
+
+  // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
+  const startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
+    startNormLocYLev0 = (typeof parameters.startNormLocY === "undefined" ? 0.5 : parameters.startNormLocY);
   const startNormLocXLev1 = (typeof parameters.startNormLocXLev1 === "undefined" ? 0.5 : parameters.startNormLocXLev1),
     startNormLocYLev1 = (typeof parameters.startNormLocYLev1 === "undefined" ? 0.0 : parameters.startNormLocYLev1);
 
-  callback = callback || ( function (StickStatus) { } );
+  const radiiDifference = (typeof parameters.radiiDifference === "undefined" ? 30 : parameters.radiiDifference);
+  const internalRadiusLev0 = (typeof parameters.internalRadius === "undefined" ? (width - (width/2 + 10) - radiiDifference) / 2 : parameters.internalRadius);
+  const internalRadiusLev1 = (typeof parameters.internalRadiusLev1 === "undefined" ? internalRadiusLev0/5 : parameters.internalRadiusLev1);
+  const externalRadius = (typeof parameters.externalRadius === "undefined" ? internalRadiusLev0 + radiiDifference : parameters.externalRadius);
+  const maxMoveStickBeyondInternalRadius = (typeof parameters.maxMoveStickBeyondInternalRadius === "undefined" ? 5 : parameters.maxMoveStickBeyondInternalRadius);
+  // maxMoveStick is how far from the center the joystick can move
+  const maxMoveStickLev0 = (typeof parameters.maxMoveStick === "undefined" ? internalRadiusLev0 + maxMoveStickBeyondInternalRadius : parameters.maxMoveStick);
+  const maxMoveStickLev1 = (typeof parameters.maxMoveStickLev1 === "undefined" ?
+    internalRadiusLev0-2*internalRadiusLev1 :  // default has subtraction multiplied by 2 because one on each side
+    parameters.maxMoveStickLev1);
+
 
   // Create Canvas element and add it in the Container object
   const canvas = document.createElement("canvas");
@@ -128,7 +131,7 @@ const JoyStick = function (container, parameters, callback) {
   let pressedXLev1 = null;
   let pressedYLev1 = null;
 
-  const twopi = 2 * Math.PI;  // circumference of unit circle aka 360 degrees in radians
+  const TWO_PI = 2 * Math.PI;  // circumference of unit circle aka 360 degrees in radians
   const directionHorizontalLimitPos = canvas.width / 10;
   const directionHorizontalLimitNeg = directionHorizontalLimitPos * -1;
   const directionVerticalLimitPos = canvas.height / 10;
@@ -138,46 +141,47 @@ const JoyStick = function (container, parameters, callback) {
   const centerRawLocYLev0 = canvas.height / 2;
   const centerRawLocXLev1 = maxMoveStickLev1;
   const centerRawLocYLev1 = maxMoveStickLev1;
-  const startRawLocXLev0 = canvas.width * startNormLocX;
-  const startRawLocYLev0 = canvas.height * (1-startNormLocY);
+  const startRawLocXLev0 = canvas.width * startNormLocXLev0;
+  const startRawLocYLev0 = canvas.height * (1-startNormLocYLev0);
   const startRawLocXLev1 = maxMoveStickLev1*2 * startNormLocXLev1;
   const startRawLocYLev1 = maxMoveStickLev1*2 * (1-startNormLocYLev1);
   const setupParameters = {
     title: title,
     width: width,
     height: height,
+    directionHorizontalLimitPos: directionHorizontalLimitPos,
+    directionHorizontalLimitNeg: directionHorizontalLimitNeg,
+    directionVerticalLimitPos: directionVerticalLimitPos,
+    directionVerticalLimitNeg: directionVerticalLimitNeg,
     internalFillColor: internalFillColor,
     internalLineWidth: internalLineWidth,
     internalStrokeColor: internalStrokeColor,
     externalLineWidth: externalLineWidth,
     externalStrokeColor: externalStrokeColor,
     autoReturnToCenter: autoReturnToCenter,
-    startNormLocX: startNormLocX,
-    startNormLocY: startNormLocY,
+    moveRelativeToInitialMouseDown: moveRelativeToInitialMouseDown,
+    startNormLocXLev0: startNormLocXLev0,
+    startNormLocYLev0: startNormLocYLev0,
     startNormLocXLev1: startNormLocXLev1,
     startNormLocYLev1: startNormLocYLev1,
     radiiDifference: radiiDifference,
-    internalRadius: internalRadius,
+    internalRadiusLev0: internalRadiusLev0,
     internalRadiusLev1: internalRadiusLev1,
     externalRadius: externalRadius,
     maxMoveStickBeyondInternalRadius: maxMoveStickBeyondInternalRadius,
     maxMoveStickLev0: maxMoveStickLev0,
     maxMoveStickLev1: maxMoveStickLev1,
-    moveRelativeToInitialMouseDown: moveRelativeToInitialMouseDown,
     centerRawLocXLev0: centerRawLocXLev0,
     centerRawLocYLev0: centerRawLocYLev0,
     centerRawLocXLev1: centerRawLocXLev1,
     centerRawLocYLev1: centerRawLocYLev1,
-    directionHorizontalLimitPos: directionHorizontalLimitPos,
-    directionHorizontalLimitNeg: directionHorizontalLimitNeg,
-    directionVerticalLimitPos: directionVerticalLimitPos,
-    directionVerticalLimitNeg: directionVerticalLimitNeg,
     startRawLocXLev0: startRawLocXLev0,
     startRawLocYLev0: startRawLocYLev0,
     startRawLocXLev1: startRawLocXLev1,
     startRawLocYLev1: startRawLocYLev1,
   }
-  // Used to save current position of stick
+
+  // Variables represent current position of joystick
   let currentRawLocXLev0 = startRawLocXLev0;
   let currentRawLocYLev0 = startRawLocYLev0;
   let currentRawLocXLev1 = startRawLocXLev1;
@@ -193,6 +197,7 @@ const JoyStick = function (container, parameters, callback) {
     document.addEventListener("mousemove", onMouseMove, false);
     document.addEventListener("mouseup", onMouseUp, false);
   }
+
   // Draw the object
   drawExternal();
   drawInternal();
@@ -206,7 +211,7 @@ const JoyStick = function (container, parameters, callback) {
    */
   function drawExternal() {
     context.beginPath();
-    context.arc(centerRawLocXLev0, centerRawLocYLev0, externalRadius, 0, twopi, false);
+    context.arc(centerRawLocXLev0, centerRawLocYLev0, externalRadius, 0, TWO_PI, false);
     context.lineWidth = externalLineWidth;
     context.strokeStyle = externalStrokeColor;
     context.stroke();
@@ -218,21 +223,21 @@ const JoyStick = function (container, parameters, callback) {
   function drawInternal() {
     context.beginPath();
     // prevent circle from being outside the canvas
-    if (currentRawLocXLev0 < internalRadius) {
-      //console.log("X1: ", currentRawLocXLev0.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
-      currentRawLocXLev0 = internalRadius;
+    if (currentRawLocXLev0 < internalRadiusLev0) {
+      //console.log("X1: ", currentRawLocXLev0.toFixed(2) + " < " + internalRadiusLev0.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
+      currentRawLocXLev0 = internalRadiusLev0;
     }
-    if (currentRawLocXLev0 + internalRadius > canvas.width) {
-      //console.log("X2: ", currentRawLocXLev0.toFixed(2) + " > " + (canvas.width-internalRadius).toFixed(2) + " -->" + (canvas.width-maxMoveStickLev0).toFixed(1));
-      currentRawLocXLev0 = canvas.width - internalRadius;
+    if (currentRawLocXLev0 + internalRadiusLev0 > canvas.width) {
+      //console.log("X2: ", currentRawLocXLev0.toFixed(2) + " > " + (canvas.width-internalRadiusLev0).toFixed(2) + " -->" + (canvas.width-maxMoveStickLev0).toFixed(1));
+      currentRawLocXLev0 = canvas.width - internalRadiusLev0;
     }
-    if (currentRawLocYLev0 < internalRadius) {
-      //console.log("Y1: ", currentRawLocYLev0.toFixed(2) + " < " + internalRadius.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
-      currentRawLocYLev0 = internalRadius;
+    if (currentRawLocYLev0 < internalRadiusLev0) {
+      //console.log("Y1: ", currentRawLocYLev0.toFixed(2) + " < " + internalRadiusLev0.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
+      currentRawLocYLev0 = internalRadiusLev0;
     }
-    if (currentRawLocYLev0 + internalRadius > canvas.height) {
-      //console.log("Y2: ", currentRawLocYLev0.toFixed(2) + " > " + (canvas.height-internalRadius).toFixed(2) + " -->" + (canvas.height-maxMoveStickLev0).toFixed(1));
-      currentRawLocYLev0 = canvas.height - internalRadius;
+    if (currentRawLocYLev0 + internalRadiusLev0 > canvas.height) {
+      //console.log("Y2: ", currentRawLocYLev0.toFixed(2) + " > " + (canvas.height-internalRadiusLev0).toFixed(2) + " -->" + (canvas.height-maxMoveStickLev0).toFixed(1));
+      currentRawLocYLev0 = canvas.height - internalRadiusLev0;
     }
 
     // prevent the circle from being beyond maxMoveStickLev0
@@ -259,7 +264,7 @@ const JoyStick = function (container, parameters, callback) {
     context.lineWidth = internalLineWidth;
     context.strokeStyle = internalStrokeColor;
 
-    context.arc(currentRawLocXLev0, currentRawLocYLev0, internalRadius, 0, twopi, false);
+    context.arc(currentRawLocXLev0, currentRawLocYLev0, internalRadiusLev0, 0, TWO_PI, false);
     context.fill();
     context.stroke();
 
@@ -268,7 +273,7 @@ const JoyStick = function (container, parameters, callback) {
       context.arc(
         currentRawLocXLev0 + currentRawLocXLev1-centerRawLocXLev1,
         currentRawLocYLev0 + currentRawLocYLev1-centerRawLocYLev1,
-        internalRadiusLev1, 0, twopi, false);
+        internalRadiusLev1, 0, TWO_PI, false);
       context.fill();
       context.stroke();
     }
@@ -337,7 +342,7 @@ const JoyStick = function (container, parameters, callback) {
         pressed = 1;
         pressedXLev0 = null;
         pressedYLev0 = null;
-      } else if (!moveRelativeToInitialMouseDown || (Math.abs(pressedXLev0) <= internalRadius && Math.abs(pressedYLev0) <= internalRadius) ) {
+      } else if (!moveRelativeToInitialMouseDown || (Math.abs(pressedXLev0) <= internalRadiusLev0 && Math.abs(pressedYLev0) <= internalRadiusLev0) ) {
         // clicked level 1 joystick (or area around it if moveRelativeToInitialMouseDown is false)
         pressed = 0;
         pressedXLev1 = null;
@@ -470,7 +475,7 @@ const JoyStick = function (container, parameters, callback) {
   };
   /**
    * @desc Get the parameters that were calculated initially during setting up the object
-   * @return {autoReturnToCenter: boolean|boolean|*, centerRawLocYLev0: number, centerRawLocXLev0: number, maxMoveStickLev0: *, title: string|string|*, startNormLocX: number|number|*, startNormLocY: number|number|*, directionHorizontalLimitPos: number, internalFillColor: string|*, externalRadius: *, directionHorizontalLimitNeg: number, height: number|*, moveRelativeToInitialMouseDown: boolean|boolean|*, internalRadius: number|number|*, internalLineWidth: number|*, externalLineWidth: number|*, width: number|*, externalStrokeColor: string|*, startRawLocYLev0: number, directionVerticalLimitNeg: number, startRawLocXLev0: number, maxMoveStickBeyondInternalRadius: number|number|*, internalStrokeColor: string|*, radiiDifference: number|number|*, directionVerticalLimitPos: number}
+   * @return {autoReturnToCenter: boolean|boolean|*, centerRawLocYLev0: number, centerRawLocXLev0: number, maxMoveStickLev0: *, title: string|string|*, startNormLocXLev0: number|number|*, startNormLocYLev0: number|number|*, directionHorizontalLimitPos: number, internalFillColor: string|*, externalRadius: *, directionHorizontalLimitNeg: number, height: number|*, moveRelativeToInitialMouseDown: boolean|boolean|*, internalRadiusLev0: number|number|*, internalLineWidth: number|*, externalLineWidth: number|*, width: number|*, externalStrokeColor: string|*, startRawLocYLev0: number, directionVerticalLimitNeg: number, startRawLocXLev0: number, maxMoveStickBeyondInternalRadius: number|number|*, internalStrokeColor: string|*, radiiDifference: number|number|*, directionVerticalLimitPos: number}
    */
   this.GetSetupParameters = function() {
     return setupParameters;
