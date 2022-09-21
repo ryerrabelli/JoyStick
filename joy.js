@@ -637,6 +637,7 @@ const JoyStick = function (container, parameters, callback) {
     return currentRawLocYLev0;
   };
   /*
+    // EQUATION REARRANGEMENT
     currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normXLev0 - 1);
     currentRawLocXLev2 = centerRawLocXLev2 + maxMoveStick*(2*normXLev2 - 1);
     normXLev0 == (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
@@ -651,14 +652,14 @@ const JoyStick = function (container, parameters, callback) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
       const relativeJoystickPower = 0.2;
       if (!isNullOrUndef(normX)) {
-        let normLocXLevCombined = this.GetNormLocXLevCombined();
         //const oldNormLocXLev0 = this.GetNormLocX({level:0});
         //const oldNormLocXLev2 = this.GetNormLocX({level:1});
+        //const oldNormLocXLevCombined = this.GetNormLocXLevCombined();
         const oldNormLocXLev0 = (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
         const oldNormLocXLev2 = (1 + (currentRawLocXLev2 - centerRawLocXLev2) / maxMoveStickLev2)/2.0;
         const oldNormLocXLevCombined = (oldNormLocXLev0 + oldNormLocXLev2*relativeJoystickPower) / (1+relativeJoystickPower);
 
-        if (Math.abs(normX-normLocXLevCombined)>0.0001) {
+        if ( Math.abs(normX - oldNormLocXLevCombined) > 0.0001 ) {
           let normXLev0 = normX;
           let normXLev2 = normX;
           currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normXLev0 - 1);
@@ -669,11 +670,8 @@ const JoyStick = function (container, parameters, callback) {
       }
 
       if (!isNullOrUndef(normY)) {
-        let normLocYLevCombined = this.GetNormLocYLevCombined();
-        if (Math.abs(normY-normLocYLevCombined)>0.0001) {
-          //currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
-          //const relativeJoystickPower = 0.2;
-          //currentRawLocYLev2 = (normY * (1+relativeJoystickPower) - currentRawLocYLev0)/relativeJoystickPower;
+        let oldNormLocYLevCombined = this.GetNormLocYLevCombined();
+        if ( Math.abs(normY - oldNormLocYLevCombined) > 0.0001 ) {
           let normYLev0 = normY;
           let normYLev2 = normY;
           currentRawLocYLev0 = centerRawLocYLev0 + maxMoveStick*(2*normYLev0 - 1);
