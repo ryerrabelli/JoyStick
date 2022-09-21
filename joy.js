@@ -514,9 +514,10 @@ const JoyStick = function (container, parameters, callback) {
 
   /**
    * @desc The X position of the cursor relative to the canvas that contains it and to its dimensions
+   * @param {number?} level
    * @return Number that indicate relative position
    */
-  this.GetRawLocX = function ({level=0}={}) {
+  this.GetRawLocX = function ({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return currentRawLocXLev0;
     else if (level>=1) return currentRawLocXLev2;
 
@@ -524,21 +525,23 @@ const JoyStick = function (container, parameters, callback) {
 
   /**
    * @desc The Y position of the cursor relative to the canvas that contains it and to its dimensions
+   * @param {number?} level
    * @return Number that indicates relative position
    */
-  this.GetRawLocY = function ({level=0}={}) {
+  this.GetRawLocY = function ({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return currentRawLocYLev0;
     else if (level>=1) return currentRawLocYLev2;
   };
   /**
    * @desc The X and Y positions of the cursor relative to the canvas that contains it and to its dimensions
+   * @param {number?} level
    * @return Array of numbers that indicate relative position
    */
-  this.GetRawLoc = function({level=0}={}) {
+  this.GetRawLoc = function({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return [currentRawLocXLev0, currentRawLocYLev0];
     else if (level>=1) return [currentRawLocXLev2, currentRawLocYLev2];
   }
-  this.SetRawLoc = function (rawLocX, rawLocY, {doRedraw=true, level=0}={}) {
+  this.SetRawLoc = function (rawLocX, rawLocY, {doRedraw=true, level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       if (!isNullOrUndef(rawLocX)) currentRawLocXLev0 = rawLocX;
       if (!isNullOrUndef(rawLocY)) currentRawLocYLev0 = rawLocY;
@@ -563,6 +566,7 @@ const JoyStick = function (container, parameters, callback) {
 
   /**
    * @desc Normalized value of X move of stick
+   * @param {number?} level
    * @return Float from 0 to 1
    */
   this.GetNormLocX = function ({level=null}={}) {
@@ -572,6 +576,7 @@ const JoyStick = function (container, parameters, callback) {
   };
   /**
    * @desc Normalized value of Y move of stick
+   * @param {number?} level
    * @return Float from 0 to 1
    */
   this.GetNormLocY = function ({level=null}={}) {
@@ -582,6 +587,7 @@ const JoyStick = function (container, parameters, callback) {
 
   /**
    * @desc Normalized value of X and Y move of stick
+   * @param {number?} level
    * @return Array of floats from 0 to 1
    */
   this.GetNormLoc = function ({level=null}={}) {
@@ -599,10 +605,10 @@ const JoyStick = function (container, parameters, callback) {
     return this.GetNormLoc({level:1});
   };
 
-  this.GetCombinedLevValue = function(lev0, lev1) {
+  this.GetCombinedLevValue = function(normLev0, normLev2) {
     const relativeJoystickPower = 0.2;
     // create weighted sum value, then divide by max possible value
-    return (lev0 + lev1*relativeJoystickPower) / (1+relativeJoystickPower);
+    return (normLev0 + normLev2*relativeJoystickPower) / (1+relativeJoystickPower);
   }
   this.GetNormLocXLevCombined = function() {
     const normLocXLevCombined = this.GetCombinedLevValue(
@@ -619,7 +625,7 @@ const JoyStick = function (container, parameters, callback) {
     return normLocYLevCombined;
   }
   this.GetNormLocLevCombined = function() {
-    return [this.GetNormLocXLevCombined, this.GetNormLocYLevCombined()];
+    return [this.GetNormLocXLevCombined(), this.GetNormLocYLevCombined()];
   }
 
   this.SetNormLocX = function (normX, doRedraw=true) {
@@ -630,20 +636,59 @@ const JoyStick = function (container, parameters, callback) {
     this.SetNormLoc(null, normY, {doRedraw:doRedraw}={});
     return currentRawLocYLev0;
   };
+  /*
+    currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normXLev0 - 1);
+    currentRawLocXLev2 = centerRawLocXLev2 + maxMoveStick*(2*normXLev2 - 1);
+    normXLev0 == (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
+    normXLev2 == (1 + (currentRawLocXLev2 - centerRawLocXLev2) / maxMoveStickLev2)/2.0;
+
+    normLevCombined == (normLev0 + normLev1*relativeJoystickPower) / (1+relativeJoystickPower)
+    normLev0 + normLev2*relativeJoystickPower == normLevCombined * (1+relativeJoystickPower)
+    normLev0 == normLevCombined*(1+relativeJoystickPower) - normLev2*relativeJoystickPower
+    normLev2 == (normLevCombined*(1+relativeJoystickPower) - normLev0) / relativeJoystickPower
+   */
   this.SetNormLoc = function (normX, normY, {doRedraw = true, level=null}={}) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
+      const relativeJoystickPower = 0.2;
       if (!isNullOrUndef(normX)) {
         let normLocXLevCombined = this.GetNormLocXLevCombined();
-        if (Math.abs(normLocXLevCombined-currentRawLocXLev0)>0.6)
-          currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normX - 1);
+        //const oldNormLocXLev0 = this.GetNormLocX({level:0});
+        //const oldNormLocXLev2 = this.GetNormLocX({level:1});
+        const oldNormLocXLev0 = (1 + (currentRawLocXLev0 - centerRawLocXLev0) / maxMoveStick)/2.0;
+        const oldNormLocXLev2 = (1 + (currentRawLocXLev2 - centerRawLocXLev2) / maxMoveStickLev2)/2.0;
+        const oldNormLocXLevCombined = (oldNormLocXLev0 + oldNormLocXLev2*relativeJoystickPower) / (1+relativeJoystickPower);
+
+        if (Math.abs(normX-normLocXLevCombined)>0.0001) {
+          let normXLev0 = normX;
+          let normXLev2 = normX;
+          currentRawLocXLev0 = centerRawLocXLev0 + maxMoveStick*(2*normXLev0 - 1);
+          currentRawLocXLev2 = centerRawLocXLev2 + maxMoveStick*(2*normXLev2 - 1);
+          //let normLev0 = (normX * (1+relativeJoystickPower) - normLev2)/relativeJoystickPower;
+        }
+
       }
 
       if (!isNullOrUndef(normY)) {
         let normLocYLevCombined = this.GetNormLocYLevCombined();
-        if (Math.abs(normLocYLevCombined-currentRawLocYLev0)>0.6)
-          currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
+        if (Math.abs(normY-normLocYLevCombined)>0.0001) {
+          //currentRawLocYLev0 = centerRawLocYLev0 - maxMoveStick*(2*normY - 1);
+          //const relativeJoystickPower = 0.2;
+          //currentRawLocYLev2 = (normY * (1+relativeJoystickPower) - currentRawLocYLev0)/relativeJoystickPower;
+          let normYLev0 = normY;
+          let normYLev2 = normY;
+          currentRawLocYLev0 = centerRawLocYLev0 + maxMoveStick*(2*normYLev0 - 1);
+          currentRawLocYLev2 = centerRawLocYLev2 + maxMoveStick*(2*normYLev2 - 1);
+        }
+
       }
       if (doRedraw) redraw();
+      const newNormLocLevCombined = this.GetNormLocLevCombined();
+      console.log(
+        normX.toFixed(2),
+        normY.toFixed(2),
+        newNormLocLevCombined[0].toFixed(2),
+        newNormLocLevCombined[1].toFixed(2),
+    );
       return this.GetNormLocLevCombined();
 
 
