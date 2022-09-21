@@ -24,8 +24,9 @@ By using the new callback function, **introduced with version 2.0.0 of the libra
 The available properties are:
 
 - **xPosition** and **yPosition**: they provide the position of the cursor relative to the Canvas that contains it and to its dimensions. As it happens for the methods: GetRawLocX and GetRawLocY
-- **cardinalDirection**: it provide the direction of the cursor as a string that indicates the cardinal points where this is oriented (N, NE, E, SE, S, SW, W, NW and C when it is placed in the center). As it happens for the method: GetDir
-- **x** and **y**: they provide a value between -100 to +100 ***independently*** of size of the Canvas. As it happens for the methods: GetX and GetY
+- **cardinalDirection**: it provide the direction of the cursor as a string that indicates the cardinal points where this is oriented (N, NE, E, SE, S, SW, W, NW and C when it is placed in the center). As it happens for the method: GetCardinalDirection
+- **x** and **y**: they provide a value between -100 to +100 ***independently*** of size of the Canvas. As it 
+  happens for the methods: GetDirLocX and GetDirLocY
 
 The old methods, the only ones available up to version 1.6.0, can still be used with the new version. Using them you can know the position of the Stick is located.
 The methods available are:
@@ -60,7 +61,9 @@ var joy = new JoyStick('joyDiv');
 </script>
 ```
 
-You can call one of method, explained before, that return status of Stick, for example in the ***[joy.html](http://bobboteck.github.io/joy/joy.html)*** file every 50 millisecond was called the method **GetX()** and showed the value in a textbox:
+You can call one of method, explained before, that return status of Stick, for example in the ***[joy.html]
+(http://bobboteck.github.io/joy/joy.html)*** file every 50 millisecond was called the method **GetDirLocX()** and 
+showed the value in a textbox:
 
 ```javascript
 setInterval(function(){ x.value=joy.GetDirLocX(); }, 50);

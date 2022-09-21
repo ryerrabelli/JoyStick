@@ -125,9 +125,9 @@ var joy1Y = document.getElementById("joy1Y");
 /*
 setInterval(function(){ joy1IinputPosX.value=Joy1.GetRawLocX(); }, 50);
 setInterval(function(){ joy1InputPosY.value=Joy1.GetRawLocY(); }, 50);
-setInterval(function(){ joy1Direzione.value=Joy1.GetDir(); }, 50);
-setInterval(function(){ joy1X.value=Joy1.GetX(); }, 50);
-setInterval(function(){ joy1Y.value=Joy1.GetY(); }, 50);
+setInterval(function(){ joy1Direzione.value=Joy1.GetCardinalDirection(); }, 50);
+setInterval(function(){ joy1X.value=Joy1.GetDirLocX(); }, 50);
+setInterval(function(){ joy1Y.value=Joy1.GetDirLocY(); }, 50);
 */
 // Create JoyStick object into the DIV 'joy1Div'
 var Joy1 = new JoyStick('joy1Div', {}, function(stickData) {

@@ -9,20 +9,20 @@
  * Date         Version     Modified By     Description
  * 2022-08-31   2.1.x       Rahul S. Yerrabelli
  * 2021-12-21   2.0.0       Roberto D'Amico New version of the project that integrates the callback functions, while
- *                                          maintaining compatibility with previous versions. Fixed Issue #27 too, 
+ *                                          maintaining compatibility with previous versions. Fixed Issue #27 too,
  *                                          thanks to @artisticfox8 for the suggestion.
  * 2020-06-09   1.1.6       Roberto D'Amico Fixed Issue #10 and #11
  * 2020-04-20   1.1.5       Roberto D'Amico Correct: Two sticks in a row, thanks to @liamw9534 for the suggestion
- * 2020-04-03               Roberto D'Amico Correct: InternalRadius when change the size of canvas, thanks to 
+ * 2020-04-03               Roberto D'Amico Correct: InternalRadius when change the size of this.canvas, thanks to
  *                                          @vanslipon for the suggestion
- * 2020-01-07   1.1.4       Roberto D'Amico Close #6 by implementing a new parameter to set the functionality of 
+ * 2020-01-07   1.1.4       Roberto D'Amico Close #6 by implementing a new parameter to set the functionality of
  *                                          auto-return to 0 position
  * 2019-11-18   1.1.3       Roberto D'Amico Close #5 correct indication of East direction
- * 2019-11-12   1.1.2       Roberto D'Amico Removed Fix #4 incorrectly introduced and restored operation with touch 
+ * 2019-11-12   1.1.2       Roberto D'Amico Removed Fix #4 incorrectly introduced and restored operation with touch
  *                                          devices
- * 2019-11-12   1.1.1       Roberto D'Amico Fixed Issue #4 - Now JoyStick work in any position in the page, not only 
+ * 2019-11-12   1.1.1       Roberto D'Amico Fixed Issue #4 - Now JoyStick work in any position in the page, not only
  *                                          at 0,0
- * 
+ *
  * The MIT License (MIT)
  *
  *  This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick).
@@ -34,7 +34,7 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
@@ -57,22 +57,6 @@ let StickStatus = {
   cardinalDirection: "C",
 };
 
-/**
- * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
- * @constructor
- * @param container {String} - HTML object that contains the Joystick
- * @param parameters (optional) - object with following keys:
- *  title {String} (optional) - The ID of canvas (Default value is 'joystick')
- *  width {Int} (optional) - The width of canvas, if not specified is setted at width of container object (Default value is the width of container object)
- *  height {Int} (optional) - The height of canvas, if not specified is setted at height of container object (Default value is the height of container object)
- *  internalFillColor {String} (optional) - Internal color of Stick (Default value is '#00AA00')
- *  internalLineWidth {Int} (optional) - Border width of Stick (Default value is 2)
- *  internalStrokeColor {String}(optional) - Border color of Stick (Default value is '#003300')
- *  externalLineWidth {Int} (optional) - External reference circonference width (Default value is 2)
- *  externalStrokeColor {String} (optional) - External reference circonference color (Default value is '#008000')
- *  autoReturnToCenter {Bool} (optional) - Sets the behavior of the stick, whether or not, it should return to zero position when released (Default value is True and return to zero)
- * @param callback {StickStatus} -
- */
 const JoyStick = function (container, parameters, callback) {
   const givenParameters = Object.assign({}, parameters);   // clone dict
   parameters = parameters || {};
@@ -357,7 +341,9 @@ const JoyStick = function (container, parameters, callback) {
     }
 
   }
-  /* To simplify this code there was a new experimental feature here: https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX , but it present only in Mouse case not metod presents in Touch case :-( */
+  /* To simplify this code there was a new experimental feature here:
+  https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX
+  However, it is present only in the mouse case, but not the touch case */
   function onMouseMove(event) {
     if (pressed >= 0) {
       const locs = getCorrectedPositionOnCanvas(event.pageX, event.pageY);
@@ -475,7 +461,7 @@ const JoyStick = function (container, parameters, callback) {
   };
   /**
    * @desc Get the parameters that were calculated initially during setting up the object
-   * @return {autoReturnToCenter: boolean|boolean|*, centerRawLocYLev0: number, centerRawLocXLev0: number, maxMoveStickLev0: *, title: string|string|*, startNormLocXLev0: number|number|*, startNormLocYLev0: number|number|*, directionHorizontalLimitPos: number, internalFillColor: string|*, externalRadius: *, directionHorizontalLimitNeg: number, height: number|*, moveRelativeToInitialMouseDown: boolean|boolean|*, internalRadiusLev0: number|number|*, internalLineWidth: number|*, externalLineWidth: number|*, width: number|*, externalStrokeColor: string|*, startRawLocYLev0: number, directionVerticalLimitNeg: number, startRawLocXLev0: number, maxMoveStickBeyondInternalRadius: number|number|*, internalStrokeColor: string|*, radiiDifference: number|number|*, directionVerticalLimitPos: number}
+   * @return dict
    */
   this.GetSetupParameters = function() {
     return setupParameters;
@@ -633,11 +619,11 @@ const JoyStick = function (container, parameters, callback) {
   }
 
   this.SetNormLocX = function (normX, doRedraw=true) {
-    this.SetNormLoc(normX, null, {doRedraw:doRedraw}={});
+    this.SetNormLoc(normX, null, {doRedraw:doRedraw});
     return currentRawLocXLev0;
   };
   this.SetNormLocY = function (normY, doRedraw=true) {
-    this.SetNormLoc(null, normY, {doRedraw:doRedraw}={});
+    this.SetNormLoc(null, normY, {doRedraw:doRedraw});
     return currentRawLocYLev0;
   };
   /*
