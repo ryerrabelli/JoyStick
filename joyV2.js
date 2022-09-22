@@ -224,7 +224,6 @@ class JoyStick {
    * @desc Draw the internal stick in the current position the user have moved it
    */
   #drawInternal() {
-    this.context.beginPath();
     // prevent circle from being outside the this.canvas
     if (this.currentRawLocXLev0 < this.internalRadiusLev0) {
       //console.log("X1: ", this.currentRawLocXLev0.toFixed(2) + " < " + internalRadiusLev0.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
@@ -257,13 +256,15 @@ class JoyStick {
       if ( this.centerRawLocYLev1-this.currentRawLocYLev1 > this.maxMoveStickLev1) this.currentRawLocYLev1 = this.centerRawLocYLev1 - this.maxMoveStickLev1;
     }
 
+    this.context.beginPath();
+
     // create radial gradient for fill color
-    const grd = this.context.createRadialGradient(this.centerRawLocXLev0, this.centerRawLocYLev0, 5, this.centerRawLocXLev0, this.centerRawLocYLev0, 200);
+    const grdLev0 = this.context.createRadialGradient(this.centerRawLocXLev0, this.centerRawLocYLev0, 5, this.centerRawLocXLev0, this.centerRawLocYLev0, 200);
     // Light color
-    grd.addColorStop(0, this.internalFillColor);
+    grdLev0.addColorStop(0, this.internalFillColor);
     // Dark color
-    grd.addColorStop(1, this.internalStrokeColor);
-    this.context.fillStyle = grd;
+    grdLev0.addColorStop(1, this.internalStrokeColor);
+    this.context.fillStyle = grdLev0;
     this.context.lineWidth = this.internalLineWidth;
     this.context.strokeStyle = this.internalStrokeColor;
 
@@ -272,11 +273,28 @@ class JoyStick {
     this.context.stroke();
 
     if (this.joystickLevels===2) {
+          // Get Lev1 coordinates relative to the entire canvas, not just Lev1 relative to Lev0
+      const currentRawLocXLev1Canvas = this.currentRawLocXLev1-this.centerRawLocXLev1 + this.currentRawLocXLev0;
+      const currentRawLocYLev1Canvas = this.currentRawLocYLev1-this.centerRawLocYLev1 + this.currentRawLocYLev0;
+      // Get center of the Lev1 area relative to the entire canvas
+      const centerRawLocXLev1Canvas = this.currentRawLocXLev0;
+      const centerRawLocYLev1Canvas = this.currentRawLocYLev0;
+
       this.context.beginPath();
-      this.context.arc(
-        this.currentRawLocXLev0 + this.currentRawLocXLev1-this.centerRawLocXLev1,
-        this.currentRawLocYLev0 + this.currentRawLocYLev1-this.centerRawLocYLev1,
-        this.internalRadiusLev1, 0, TWO_PI, false);
+
+      const grdLev1 = this.context.createRadialGradient(
+        centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, 1,
+        centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, this.maxMoveStickLev1*2);
+      this.internalFillColorLev1 = this.internalFillColor;  //"#0000AA";
+      this.internalStrokeColorLev1 = this.internalStrokeColor;  //"#000033";
+      this.internalLineWidthLev1 = this.internalLineWidth;
+      grdLev1.addColorStop(0, this.internalFillColorLev1);  // Light color
+      grdLev1.addColorStop(1, this.internalStrokeColorLev1);  // Dark color
+      this.context.fillStyle = grdLev1;
+      this.context.lineWidth = this.internalLineWidthLev1;
+      this.context.strokeStyle = this.internalStrokeColorLev1;
+
+      this.context.arc(currentRawLocXLev1Canvas, currentRawLocYLev1Canvas, this.internalRadiusLev1, 0, TWO_PI, false);
       this.context.fill();
       this.context.stroke();
     }

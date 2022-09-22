@@ -205,7 +205,6 @@ const JoyStick = function (container, parameters, callback) {
    * @desc Draw the internal stick in the current position the user have moved it
    */
   function drawInternal() {
-    context.beginPath();
     // prevent circle from being outside the canvas
     if (currentRawLocXLev0 < internalRadiusLev0) {
       //console.log("X1: ", currentRawLocXLev0.toFixed(2) + " < " + internalRadiusLev0.toFixed(2) + " -->" + maxMoveStickLev0.toFixed(1));
@@ -238,13 +237,15 @@ const JoyStick = function (container, parameters, callback) {
       if ( centerRawLocYLev1-currentRawLocYLev1 > maxMoveStickLev1) currentRawLocYLev1 = centerRawLocYLev1 - maxMoveStickLev1;
     }
 
+    context.beginPath();
+
     // create radial gradient for fill color
-    const grd = context.createRadialGradient(centerRawLocXLev0, centerRawLocYLev0, 5, centerRawLocXLev0, centerRawLocYLev0, 200);
-    // Light color
-    grd.addColorStop(0, internalFillColor);
-    // Dark color
-    grd.addColorStop(1, internalStrokeColor);
-    context.fillStyle = grd;
+    const grdLev0 = context.createRadialGradient(
+      centerRawLocXLev0, centerRawLocYLev0, 5,
+      centerRawLocXLev0, centerRawLocYLev0, 200);
+    grdLev0.addColorStop(0, internalFillColor);  // Light color
+    grdLev0.addColorStop(1, internalStrokeColor);  // Dark color
+    context.fillStyle = grdLev0;
     context.lineWidth = internalLineWidth;
     context.strokeStyle = internalStrokeColor;
 
@@ -253,11 +254,26 @@ const JoyStick = function (container, parameters, callback) {
     context.stroke();
 
     if (joystickLevels===2) {
+      // Get Lev1 coordinates relative to the entire canvas, not just Lev1 relative to Lev0
+      const currentRawLocXLev1Canvas = currentRawLocXLev1-centerRawLocXLev1 + currentRawLocXLev0;
+      const currentRawLocYLev1Canvas = currentRawLocYLev1-centerRawLocYLev1 + currentRawLocYLev0;
+      // Get center of the Lev1 area relative to the entire canvas
+      const centerRawLocXLev1Canvas = currentRawLocXLev0;
+      const centerRawLocYLev1Canvas = currentRawLocYLev0;
+
       context.beginPath();
-      context.arc(
-        currentRawLocXLev0 + currentRawLocXLev1-centerRawLocXLev1,
-        currentRawLocYLev0 + currentRawLocYLev1-centerRawLocYLev1,
-        internalRadiusLev1, 0, TWO_PI, false);
+
+      const grdLev1 = context.createRadialGradient(centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, 1, centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, maxMoveStickLev1*2);
+      const internalFillColorLev1 = internalFillColor;  //"#0000AA";
+      const internalStrokeColorLev1 = internalStrokeColor;  //"#000033";
+      const internalLineWidthLev1 = internalLineWidth;
+      grdLev1.addColorStop(0, internalFillColorLev1);  // Light color
+      grdLev1.addColorStop(1, internalStrokeColorLev1);  // Dark color
+      context.fillStyle = grdLev1;
+      context.lineWidth = internalLineWidthLev1;
+      context.strokeStyle = internalStrokeColorLev1;
+
+      context.arc(currentRawLocXLev1Canvas, currentRawLocYLev1Canvas, internalRadiusLev1, 0, TWO_PI, false);
       context.fill();
       context.stroke();
     }
