@@ -411,8 +411,12 @@ class JoyStick {
         this.pressedYLev1 = locLev1.y - this.currentRawLocYLev1;
       }
       if (this.arrowCount>0) {
-        this.pressedDegrees =
-          Math.atan2(this.pressedYLev0, this.pressedXLev0) * 180/Math.PI - this.currentArrowLocDegrees;
+        let locAngleDegrees = Math.atan2(this.pressedYLev0, this.pressedXLev0) * 180/Math.PI;
+        // make locAngleDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
+        while (locAngleDegrees - this.currentArrowLocDegrees <= -180)  locAngleDegrees += 360;
+        while (locAngleDegrees - this.currentArrowLocDegrees > 180)  locAngleDegrees -= 360;
+        this.pressedDegrees = locAngleDegrees - this.currentArrowLocDegrees;
+
       }
 
       if (Math.abs(this.pressedXLev1) <= this.internalRadiusLev1  && Math.abs(this.pressedYLev1) <= this.internalRadiusLev1) {
@@ -464,13 +468,12 @@ class JoyStick {
 
       } else if (this.pressed==="arrow") {
         const locFromCenterLev0 = {x:locLev0.x-this.currentRawLocXLev0, y:locLev0.y-this.currentRawLocYLev0}
-        const clickDegrees = Math.atan2(locFromCenterLev0.y, locFromCenterLev0.x)*180/Math.PI;
+        let clickDegrees = Math.atan2(locFromCenterLev0.y, locFromCenterLev0.x)*180/Math.PI;
+        // make clickDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
+        while (clickDegrees - this.currentArrowLocDegrees <= -180)  clickDegrees += 360;
+        while (clickDegrees - this.currentArrowLocDegrees > 180)  clickDegrees -= 360;
         this.currentArrowLocDegrees =
            clickDegrees - this.pressedDegrees;
-        while (this.currentArrowLocDegrees> 180) this.currentArrowLocDegrees -= 360;
-        while (this.currentArrowLocDegrees<=-180) this.currentArrowLocDegrees += 360;
-        //console.log( locFromCenterLev0.x.toFixed(1), locFromCenterLev0.y.toFixed(1), clickDegrees.toFixed(1)+DEG, this.pressedDegrees.toFixed(1)+DEG)  ;
-        //console.log(clickDegrees.toFixedthis.currentArrowLocDegrees)
       }
 
       this.#redraw();
