@@ -109,7 +109,8 @@ class JoyStick {
       this.moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
 
     this.joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
-    this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 2 : parameters.arrowCount);
+    this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 0 : parameters.arrowCount);
+    this.isRotatable = (typeof parameters.isRotatable === "undefined" ? this.arrowCount>0 : parameters.isRotatable);
     // This is the position of the first arrow if there are multiple arrows
     this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
     this.minArrowLocDegrees = (typeof parameters.minArrowLocDegrees === "undefined" ? -180 : parameters.minArrowLocDegrees);
@@ -200,8 +201,11 @@ class JoyStick {
       startRawLocYLev0: this.startRawLocYLev0,
       startRawLocXLev1: this.startRawLocXLev1,
       startRawLocYLev1: this.startRawLocYLev1,
+      isRotatable: this.isRotatable,
       arrowCount: this.arrowCount,
       startArrowLocDegrees: this.startArrowLocDegrees,
+      minArrowLocDegrees: this.minArrowLocDegrees,
+      maxArrowLocDegrees: this.maxArrowLocDegrees,
       arrowCurveRadius: this.arrowCurveRadius,
       arrowCurveDegrees: this.arrowCurveDegrees,
       arrowHeadLengthDegrees: this.arrowHeadLengthDegrees,
@@ -301,7 +305,7 @@ class JoyStick {
     this.context.fill();
     this.context.stroke();
 
-    if (this.arrowCount>0) {
+    if (this.isRotatable) {
       // Draw arrows
       this.context.lineWidth = this.internalLineWidth * 1.5;
 
@@ -400,7 +404,8 @@ class JoyStick {
     this.#drawInternal();
   }
 
-  #updateStickStatus(newCurrentRawLocXLev0, newCurrentRawLocYLev0, newCurrentRawLocXLev1=null, newCurrentRawLocYLev1=null) {
+  #updateStickStatus(newCurrentRawLocXLev0, newCurrentRawLocYLev0,
+                     newCurrentRawLocXLev1=null, newCurrentRawLocYLev1=null, newCurrentArrowLocDegrees=null) {
     StickStatus.xPositionLev0 = newCurrentRawLocXLev0;
     StickStatus.yPositionLev0 = newCurrentRawLocYLev0;
     StickStatus.xLev0 =   (100 * (newCurrentRawLocXLev0 -this. centerRawLocXLev0) / this.maxMoveStickLev0).toFixed();
@@ -419,6 +424,7 @@ class JoyStick {
       //StickStatus.xNormLevCombined = this.GetNormLocLevCombined();
       //StickStatus.yNormLevCombined = this.GetNormLocLevCombined();
     }
+    if (!isNullOrUndef(newCurrentArrowLocDegrees)) StickStatus.currentArrowLocDegrees = newCurrentArrowLocDegrees;
 
     StickStatus.cardinalDirection = this.#getCardinalDirection();
   }
@@ -448,7 +454,7 @@ class JoyStick {
         this.pressedXLev1 = locLev1.x- this.currentRawLocXLev1;  // pressed position relative to the circle center
         this.pressedYLev1 = locLev1.y - this.currentRawLocYLev1;
       }
-      if (this.arrowCount>0) {
+      if (this.isRotatable) {
         let locAngleDegrees = Math.atan2(this.pressedYLev0, this.pressedXLev0) * 180/Math.PI;
         // make locAngleDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
         while (locAngleDegrees - this.currentArrowLocDegrees <= -180)  locAngleDegrees += 360;
@@ -517,7 +523,9 @@ class JoyStick {
       this.#redraw();
 
       // Set attribute of callback
-      this.#updateStickStatus(this.currentRawLocXLev0, this.currentRawLocYLev0, this.currentRawLocXLev1, this.currentRawLocYLev1);
+      this.#updateStickStatus(
+        this.currentRawLocXLev0, this.currentRawLocYLev0,
+        this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentArrowLocDegrees);
       this.callback(StickStatus);
     }
   }
@@ -536,7 +544,9 @@ class JoyStick {
     this.#redraw();
 
     // Set attribute of callback
-    this.#updateStickStatus(this.currentRawLocXLev0, this.currentRawLocYLev0, this.currentRawLocXLev1, this.currentRawLocYLev1);
+    this.#updateStickStatus(
+      this.currentRawLocXLev0, this.currentRawLocYLev0,
+      this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentArrowLocDegrees);
     this.callback(StickStatus);
   }
   #getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
@@ -663,7 +673,7 @@ class JoyStick {
    */
   GetRawLocX({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return this.currentRawLocXLev0;
-    else if (level>=1) return this.currentRawLocXLev1;
+    else if (level===1) return this.currentRawLocXLev1;
 
   };
 
@@ -674,16 +684,19 @@ class JoyStick {
    */
   GetRawLocY({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return this.currentRawLocYLev0;
-    else if (level>=1) return this.currentRawLocYLev1;
+    else if (level===1) return this.currentRawLocYLev1;
   };
+  GetRawLocDeg({level=null}={}) {
+    if (isNullOrUndef(level) || level===0) return this.currentArrowLocDegrees;
+    else return undefined;
+  }
   /**
    * @desc The X and Y positions of the cursor relative to the this.canvas that contains it and to its dimensions
    * @param {number?} level
    * @return Array of numbers that indicate relative position
    */
   GetRawLoc({level=null}={}) {
-    if (isNullOrUndef(level) || level===0) return [this.currentRawLocXLev0, this.currentRawLocYLev0];
-    else if (level>=1) return [this.currentRawLocXLev1, this.currentRawLocYLev1];
+    return [this.GetRawLocX({level:level}), this.GetRawLocY({level:level}), this.GetRawLocDeg({level:level})];
   }
   SetRawLoc(rawLocX, rawLocY, {doRedraw=true, level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
@@ -691,7 +704,7 @@ class JoyStick {
       if (!isNullOrUndef(rawLocY)) this.currentRawLocYLev0 = rawLocY;
       if (doRedraw) this.#redraw();
       return [this.currentRawLocXLev0, this.currentRawLocYLev0];
-    } else if (level>=1) {
+    } else if (level===1) {
       if (!isNullOrUndef(rawLocX)) this.currentRawLocXLev1 = rawLocX;
       if (!isNullOrUndef(rawLocY)) this.currentRawLocYLev1 = rawLocY;
       if (doRedraw) this.#redraw();
@@ -716,7 +729,7 @@ class JoyStick {
   GetNormLocX({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocXLevCombined();
     if (level===0) return (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
-    else if (level>=1) return (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
+    else if (level===1) return (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
   };
   /**
    * @desc Normalized value of Y move of stick
@@ -726,9 +739,19 @@ class JoyStick {
   GetNormLocY({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocYLevCombined();
     if (level===0) return (1 + (this.currentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1)/2.0;
-    else if (level>=1) return (1 + (this.currentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1)/2.0;
+    else if (level===1) return (1 + (this.currentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1)/2.0;
   };
+  GetNormLocDeg({level=null}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentArrowLocDegrees)) {
+        return null;
+      } else {
+        const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
+        return (this.currentArrowLocDegrees - this.minArrowLocDegrees)/range;
+      }
+    } else return undefined;
 
+  }
   /**
    * @desc Normalized value of X and Y move of stick
    * @param {number?} level
@@ -736,8 +759,9 @@ class JoyStick {
    */
   GetNormLoc({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocLevCombined();
-    if (level===0) return [this.GetNormLocX(), this.GetNormLocY()];
-    else if (level>=1) return [this.GetNormLocX({level:1}), this.GetNormLocY({level:1})];
+    else return [this.GetNormLocX({level:level}), this.GetNormLocY({level:level}), this.GetNormLocDeg({level:level})];
+    //if (level===0) return [this.GetNormLocX(), this.GetNormLocY(), this.GetNormLocDeg()];
+    //else if (level===1) return [this.GetNormLocX({level:1}), this.GetNormLocY({level:1}), this.GetNormLocDeg({level:1})];
   };
   GetNormLocXLev1() {
     return this.GetNormLocX({level:1});
@@ -769,7 +793,7 @@ class JoyStick {
     return normLocYLevCombined;
   }
   GetNormLocLevCombined() {
-    return [this.GetNormLocXLevCombined(), this.GetNormLocYLevCombined()];
+    return [this.GetNormLocXLevCombined(), this.GetNormLocYLevCombined(), this.GetNormLocDeg()];
   }
 
   SetNormLocX(normX, doRedraw=true) {
@@ -853,22 +877,42 @@ class JoyStick {
    * @desc directional value of X move of stick
    * @return Integer from -100 to +100
    */
-  GetDirLocX() {
-    return (100 * ((this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)).toFixed();
+  GetDirLocX({level=null}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      return (100 * ((this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)).toFixed();
+    } else if (level===1) {
+      return (100 * ((this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)).toFixed();
+    }
+
   };
   /**
    * @desc directional value of Y move of stick
    * @return Integer from -100 to +100
    */
-  GetDirLocY() {
-    return ((100 * ((this.currentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0)) * -1).toFixed();
+  GetDirLocY({level=null}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      return (100 * ((this.currentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0)).toFixed();
+    } else if (level===1) {
+      return (100 * ((this.currentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1)).toFixed();
+    }
+  };
+  GetDirLocDeg({level=null}={}) {
+    if (isNullOrUndef(level) || level===0) {
+      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentArrowLocDegrees)) {
+        return null;
+      } else {
+        const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
+        return (100 * ((this.currentArrowLocDegrees - this.startArrowLocDegrees) / range)).toFixed();
+      }
+    } else return undefined;
+
   };
   /**
    * @desc directional value of X and Y move of stick
    * @return Array of integers from -100 to +100
    */
-  GetDirLoc() {
-    return [this.GetDirLocX(), this.GetDirLocY()];
+  GetDirLoc({level=null}={}) {
+    return [this.GetDirLocX({level:level}), this.GetDirLocY({level:level}), this.GetDirLocDeg({level:level})];
   };
 
 
