@@ -109,13 +109,7 @@ class JoyStick {
       this.moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
 
     this.joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
-    this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 0 : parameters.arrowCount);
-    this.isRotatable = (typeof parameters.isRotatable === "undefined" ? this.arrowCount>0 : parameters.isRotatable);
-    // This is the position of the first arrow if there are multiple arrows
-    this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
-    this.minArrowLocDegrees = (typeof parameters.minArrowLocDegrees === "undefined" ? -180 : parameters.minArrowLocDegrees);
-    this.maxArrowLocDegrees = (typeof parameters.maxArrowLocDegrees === "undefined" ? +180 : parameters.maxArrowLocDegrees);
-    
+
     // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
     this.startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
       this.startNormLocYLev0 = (typeof parameters.startNormLocY === "undefined" ? 0.5 : parameters.startNormLocY);
@@ -132,6 +126,16 @@ class JoyStick {
     this.maxMoveStickLev1 = (typeof parameters.maxMoveStickLev1 === "undefined" ?
       this.internalRadiusLev0-2*this.internalRadiusLev1 :  // default has subtraction multiplied by 2 because one on each side
       parameters.maxMoveStickLev1);
+
+    this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 0 : parameters.arrowCount);
+    this.isRotatable = (typeof parameters.isRotatable === "undefined" ? this.arrowCount>0 : parameters.isRotatable);
+    // This degree position referes to the position of the first arrow if there are multiple arrows
+    this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
+    this.minArrowLocDegrees = (typeof parameters.minArrowLocDegrees === "undefined" ? -180 : parameters.minArrowLocDegrees);
+    this.maxArrowLocDegrees = (typeof parameters.maxArrowLocDegrees === "undefined" ? +180 : parameters.maxArrowLocDegrees);
+    this.arrowCurveRadius = (typeof parameters.arrowCurveRadius === "undefined" ? this.internalRadiusLev0 * 1.5 : parameters.arrowCurveRadius);
+    this.arrowCurveDegrees = (typeof parameters.arrowCurveDegrees === "undefined" ? 60 : parameters.arrowCurveDegrees);
+    this.arrowHeadLengthDegrees = (typeof parameters.arrowHeadLengthDegrees === "undefined" ? 20 : parameters.arrowHeadLengthDegrees);
 
 
     // Create Canvas element and add it in the Container object
@@ -163,9 +167,7 @@ class JoyStick {
     this.startRawLocXLev1 = this.maxMoveStickLev1*2 * this.startNormLocXLev1;
     this.startRawLocYLev1 = this.maxMoveStickLev1*2 * (1-this.startNormLocYLev1);
 
-    this.arrowCurveRadius = this.internalRadiusLev0 * 2.5;
-    this.arrowCurveDegrees = 60;
-    this.arrowHeadLengthDegrees = 20;
+
 
     this.setupParameters = {
       title: this.title,
@@ -406,25 +408,29 @@ class JoyStick {
 
   #updateStickStatus(newCurrentRawLocXLev0, newCurrentRawLocYLev0,
                      newCurrentRawLocXLev1=null, newCurrentRawLocYLev1=null, newCurrentArrowLocDegrees=null) {
-    StickStatus.xPositionLev0 = newCurrentRawLocXLev0;
-    StickStatus.yPositionLev0 = newCurrentRawLocYLev0;
-    StickStatus.xLev0 =   (100 * (newCurrentRawLocXLev0 -this. centerRawLocXLev0) / this.maxMoveStickLev0).toFixed();
-    StickStatus.yLev0 =   (100 * (newCurrentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1).toFixed();
-    StickStatus.xNormLev0 = (1 + (newCurrentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
-    StickStatus.yNormLev0 = (1 + (newCurrentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1)/2.0;
+    StickStatus.rawLocXLev0 = newCurrentRawLocXLev0;
+    StickStatus.rawLocYLev0 = newCurrentRawLocYLev0;
+    StickStatus.dirLocXLev0 =   (100 * (newCurrentRawLocXLev0 - this. centerRawLocXLev0) / this.maxMoveStickLev0).toFixed();
+    StickStatus.dirLocYLev0 =   (100 * (newCurrentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1).toFixed();
+    StickStatus.normLocXLev0 = (1 + (newCurrentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
+    StickStatus.normLocYLev0 = (1 + (newCurrentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1)/2.0;
 
     if (!isNullOrUndef(newCurrentRawLocXLev1) && !isNullOrUndef(newCurrentRawLocYLev1)) {
-      StickStatus.xPositionLev1 = newCurrentRawLocXLev1;
-      StickStatus.yPositionLev1 = newCurrentRawLocYLev1;
-      StickStatus.xLev1 =   (100 * (newCurrentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1).toFixed();
-      StickStatus.yLev1 =   (100 * (newCurrentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1).toFixed();
-      StickStatus.xNormLev1 = (1 + (newCurrentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
-      StickStatus.yNormLev1 = (1 + (newCurrentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1)/2.0;
+      StickStatus.rawLocXLev1 = newCurrentRawLocXLev1;
+      StickStatus.rawLocYLev1 = newCurrentRawLocYLev1;
+      StickStatus.dirLocXLev1 =   (100 * (newCurrentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1).toFixed();
+      StickStatus.dirLocYLev1 =   (100 * (newCurrentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1).toFixed();
+      StickStatus.normLocXLev1 = (1 + (newCurrentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
+      StickStatus.normLocYLev1 = (1 + (newCurrentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1)/2.0;
 
       //StickStatus.xNormLevCombined = this.GetNormLocLevCombined();
       //StickStatus.yNormLevCombined = this.GetNormLocLevCombined();
     }
-    if (!isNullOrUndef(newCurrentArrowLocDegrees)) StickStatus.currentArrowLocDegrees = newCurrentArrowLocDegrees;
+    if (!isNullOrUndef(newCurrentArrowLocDegrees)) {
+      StickStatus.rawLocDeg = newCurrentArrowLocDegrees;
+      const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
+      StickStatus.normLocDeg = (newCurrentArrowLocDegrees - this.minArrowLocDegrees)/range;
+    }
 
     StickStatus.cardinalDirection = this.#getCardinalDirection();
   }
@@ -474,7 +480,7 @@ class JoyStick {
         this.pressed = 0;
         this.pressedXLev1 = null;
         this.pressedYLev1 = null;
-      } else if (Math.abs(this.pressedXLev0) <= this.arrowCurveRadius && Math.abs(this.pressedYLev0) <= this.arrowCurveRadius) {
+      } else if (Math.abs(this.pressedXLev0) <= this.arrowCurveRadius*1.5 && Math.abs(this.pressedYLev0) <= this.arrowCurveRadius*1.5) {
         // clicked arrows
         this.pressed = "arrow";
         this.pressedXLev1 = null;
@@ -516,8 +522,7 @@ class JoyStick {
         // make clickDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
         while (clickDegrees - this.currentArrowLocDegrees <= -180)  clickDegrees += 360;
         while (clickDegrees - this.currentArrowLocDegrees > 180)  clickDegrees -= 360;
-        this.currentArrowLocDegrees =
-           clickDegrees - this.pressedDegrees;
+        this.currentArrowLocDegrees = clickDegrees - this.pressedDegrees;
       }
 
       this.#redraw();
