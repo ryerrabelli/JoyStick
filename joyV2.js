@@ -77,6 +77,12 @@ const TWO_PI = 2 * Math.PI;  // circumference of unit circle aka 360 degrees in 
  * @param callback {StickStatus} -
  */
 class JoyStick {
+  // define private variables
+  #directionHorizontalLimitPos;
+  #directionHorizontalLimitNeg;
+  #directionVerticalLimitPos;
+  #directionVerticalLimitNeg;
+
   constructor(container, parameters, callback) {
     this.givenParameters = Object.assign({}, parameters);   // clone dict
     parameters = parameters || {};
@@ -190,15 +196,16 @@ class JoyStick {
     this.currentRawLocXLev1 = this.startRawLocXLev1;
     this.currentRawLocYLev1 = this.startRawLocYLev1;
 
-    // Check if the device support the touch or not
-    if ("ontouchstart" in document.documentElement) {
-      this.canvas.addEventListener("touchstart", this.#onTouchStart, false);
-      document.addEventListener("touchmove", this.#onTouchMove, false);
-      document.addEventListener("touchend", this.#onTouchEnd, false);
+
+    if ("ontouchstart" in document.documentElement) { // Check if the device support the touch or not
+      this.canvas.addEventListener("touchstart", event => this.#onTouchStart(event), false);
+      document.addEventListener("touchmove", event => this.#onTouchMove(event), false);
+      document.addEventListener("touchend", event => this.#onTouchEnd(event), false);
     } else {
-      this.canvas.addEventListener("mousedown", this.#onMouseDown, false);
-      document.addEventListener("mousemove", this.#onMouseMove, false);
-      document.addEventListener("mouseup", this.#onMouseUp, false);
+      // Use the arrow function notation (event =>) so that this key passes on to internal function (called binding the event listener)
+      this.canvas.addEventListener("mousedown", event => this.#onMouseDown(event), false);
+      document.addEventListener("mousemove", event => this.#onMouseMove(event), false);
+      document.addEventListener("mouseup", event => this.#onMouseUp(event), false);
     }
 
     // Draw the object
