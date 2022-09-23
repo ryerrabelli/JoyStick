@@ -58,6 +58,7 @@ let StickStatus = {
 };
 
 const TWO_PI = 2 * Math.PI;  // circumference of unit circle aka 360 degrees in radians
+const DEG = "\u00B0";   // can't just console.log the ° symbol, have to use the unicode symbol to format correctly
 
 /**
  * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
@@ -110,8 +111,8 @@ class JoyStick {
     this.joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
     this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 2 : parameters.arrowCount);
     // This is the position of the first arrow if there are multiple arrows
-    this.arrowPositionDegrees = (typeof parameters.arrowPositionDegrees === "undefined" ? 0 : parameters.arrowPositionDegrees);
-
+    this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
+    
     // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
     this.startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
       this.startNormLocYLev0 = (typeof parameters.startNormLocY === "undefined" ? 0.5 : parameters.startNormLocY);
@@ -138,11 +139,12 @@ class JoyStick {
     objContainer.appendChild(this.canvas);
     this.context = this.canvas.getContext("2d");
 
-    this.pressed = -1; //  -1 means not pressed, 0 means level 0 pressed, 1 means level 1/2 pressed
+    this.pressed = -1; //  -1 means not pressed, 0 means level 0 pressed, 1 means level 1 pressed, "arrow" means arrows pressed
     this.pressedXLev0 = null;
     this.pressedYLev0 = null;
     this.pressedXLev1 = null;
     this.pressedYLev1 = null;
+    this.pressedDegrees = null; // for the arrows
 
     this.#directionHorizontalLimitPos = this.canvas.width / 10;
     this.#directionHorizontalLimitNeg = this.#directionHorizontalLimitPos * -1;
@@ -157,6 +159,11 @@ class JoyStick {
     this.startRawLocYLev0 = this.canvas.height * (1-this.startNormLocYLev0);
     this.startRawLocXLev1 = this.maxMoveStickLev1*2 * this.startNormLocXLev1;
     this.startRawLocYLev1 = this.maxMoveStickLev1*2 * (1-this.startNormLocYLev1);
+
+    this.arrowCurveRadius = this.internalRadiusLev0 * 2.5;
+    this.arrowCurveDegrees = 60;
+    this.arrowHeadLengthDegrees = 20;
+
     this.setupParameters = {
       title: this.title,
       width: this.width,
@@ -191,6 +198,11 @@ class JoyStick {
       startRawLocYLev0: this.startRawLocYLev0,
       startRawLocXLev1: this.startRawLocXLev1,
       startRawLocYLev1: this.startRawLocYLev1,
+      arrowCount: this.arrowCount,
+      startArrowLocDegrees: this.startArrowLocDegrees,
+      arrowCurveRadius: this.arrowCurveRadius,
+      arrowCurveDegrees: this.arrowCurveDegrees,
+      arrowHeadLengthDegrees: this.arrowHeadLengthDegrees,
     }
 
     // Variables represent current position of joystick
@@ -198,6 +210,7 @@ class JoyStick {
     this.currentRawLocYLev0 = this.startRawLocYLev0;
     this.currentRawLocXLev1 = this.startRawLocXLev1;
     this.currentRawLocYLev1 = this.startRawLocYLev1;
+    this.currentArrowLocDegrees = this.startArrowLocDegrees;
 
 
     if ("ontouchstart" in document.documentElement) { // Check if the device support the touch or not
@@ -311,34 +324,30 @@ class JoyStick {
 
     if (this.arrowCount>0) {
       // Draw arrows
-      this.context.lineWidth = this.internalLineWidthLev0 * 1.5;
+      this.context.lineWidth = this.internalLineWidth * 1.5;
       this.context.strokeStyle = "#CCC";
       this.context.fillStyle = "#CCC";
 
-      const arrowCurveRadius = this.internalRadiusLev0 * 1.5;
-      const arrowCurveDegrees = 60;
-      const arrowHeadLengthDegrees = 20;
-
       for (let ind=0; ind<this.arrowCount; ind++) {
-        const centerDegrees = this.arrowPositionDegrees + ind*360/this.arrowCount;
+        const centerDegrees = this.currentArrowLocDegrees + ind*360/this.arrowCount;
         // Draw arrow curved line
         this.context.beginPath();
-        this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, arrowCurveRadius,
-          (centerDegrees - arrowCurveDegrees / 2) * Math.PI / 180,
-          (centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180, false);
+        this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, this.arrowCurveRadius,
+          (centerDegrees - this.arrowCurveDegrees / 2) * Math.PI / 180,
+          (centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180, false);
         this.context.stroke();
 
         // Draw arrowhead
         this.context.beginPath();
-        this.context.moveTo(  // outermost point of arrowhead
-          this.currentRawLocXLev0 + arrowCurveRadius * 1.15 * Math.cos((centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
-          this.currentRawLocYLev0 + arrowCurveRadius * 1.15 * Math.sin((centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
-        this.context.lineTo(  // innermost point of arrowhead
-          this.currentRawLocXLev0 + arrowCurveRadius * 0.85 * Math.cos((centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
-          this.currentRawLocYLev0 + arrowCurveRadius * 0.85 * Math.sin((centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
-        this.context.lineTo(  // point of arrowhead
-          this.currentRawLocXLev0 + arrowCurveRadius * Math.cos((centerDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180),
-          this.currentRawLocYLev0 + arrowCurveRadius * Math.sin((centerDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180));
+        this.context.moveTo(  // outermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 1.15 * Math.cos((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 1.15 * Math.sin((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180));
+        this.context.lineTo(  // innermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 0.85 * Math.cos((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 0.85 * Math.sin((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180));
+        this.context.lineTo(  // the acute point of arrowhead
+          this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos((centerDegrees + this.arrowCurveDegrees / 2 + this.arrowHeadLengthDegrees) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin((centerDegrees + this.arrowCurveDegrees / 2 + this.arrowHeadLengthDegrees) * Math.PI / 180));
         this.context.fill();
       }
     }
@@ -393,13 +402,17 @@ class JoyStick {
     if (isNullOrUndef(button)) button = event.button;
     if (button===0) {  // 0 is left click, 1 is middle, 2 is right click
       const locs = this.#getCorrectedPositionOnCanvas(event.pageX, event.pageY);
-      const loc = locs[0];
-      this.pressedXLev0 = loc.x - this.currentRawLocXLev0;  // pressed position relative to the circle
-      this.pressedYLev0 = loc.y - this.currentRawLocYLev0;
+      const locLev0 = locs[0];
+      this.pressedXLev0 = locLev0.x - this.currentRawLocXLev0;  // pressed position relative to the circle center
+      this.pressedYLev0 = locLev0.y - this.currentRawLocYLev0;
       if (this.joystickLevels===2) {
         const locLev1 = locs[1];
-        this.pressedXLev1 = locLev1.x- this.currentRawLocXLev1;  // pressed position relative to the circle
+        this.pressedXLev1 = locLev1.x- this.currentRawLocXLev1;  // pressed position relative to the circle center
         this.pressedYLev1 = locLev1.y - this.currentRawLocYLev1;
+      }
+      if (this.arrowCount>0) {
+        this.pressedDegrees =
+          Math.atan2(this.pressedYLev0, this.pressedXLev0) * 180/Math.PI - this.currentArrowLocDegrees;
       }
 
       if (Math.abs(this.pressedXLev1) <= this.internalRadiusLev1  && Math.abs(this.pressedYLev1) <= this.internalRadiusLev1) {
@@ -407,9 +420,15 @@ class JoyStick {
         this.pressed = 1;
         this.pressedXLev0 = null;
         this.pressedYLev0 = null;
+        this.pressedDegrees = null;
       } else if (!this.moveRelativeToInitialMouseDown || (Math.abs(this.pressedXLev0) <= this.internalRadiusLev0 && Math.abs(this.pressedYLev0) <= this.internalRadiusLev0) ) {
         // clicked level 1 joystick (or area around it if moveRelativeToInitialMouseDown is false)
         this.pressed = 0;
+        this.pressedXLev1 = null;
+        this.pressedYLev1 = null;
+      } else if (Math.abs(this.pressedXLev0) <= this.arrowCurveRadius && Math.abs(this.pressedYLev0) <= this.arrowCurveRadius) {
+        // clicked arrows
+        this.pressed = "arrow";
         this.pressedXLev1 = null;
         this.pressedYLev1 = null;
       } else {
@@ -418,6 +437,7 @@ class JoyStick {
         this.pressedYLev0 = null;
         this.pressedXLev1 = null;
         this.pressedYLev1 = null;
+        this.pressedDegrees = null;
       }
     }
 
@@ -426,21 +446,31 @@ class JoyStick {
   https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX
   However, it is present only in the mouse case, but not the touch case */
   #onMouseMove(event) {
-    if (this.pressed >= 0) {
+    if (this.pressed >= 0 || typeof this.pressed === "string" || this.pressed instanceof String) {
       const locs = this.#getCorrectedPositionOnCanvas(event.pageX, event.pageY);
+      const locLev0 = locs[0];
       if (this.pressed===0) {
-        const loc = locs[0];
         if (this.moveRelativeToInitialMouseDown) {
-          this.currentRawLocXLev0 = loc.x - this.pressedXLev0;
-          this.currentRawLocYLev0 = loc.y - this.pressedYLev0;
+          this.currentRawLocXLev0 = locLev0.x - this.pressedXLev0;
+          this.currentRawLocYLev0 = locLev0.y - this.pressedYLev0;
         } else {
-          this.currentRawLocXLev0 = loc.x;
-          this.currentRawLocYLev0 = loc.y;
+          this.currentRawLocXLev0 = locLev0.x;
+          this.currentRawLocYLev0 = locLev0.y;
         }
       } else if (this.joystickLevels===2 && this.pressed===1) {
         const locLev1 = locs[1];
         this.currentRawLocXLev1 = locLev1.x - this.pressedXLev1;
         this.currentRawLocYLev1 = locLev1.y - this.pressedYLev1;
+
+      } else if (this.pressed==="arrow") {
+        const locFromCenterLev0 = {x:locLev0.x-this.currentRawLocXLev0, y:locLev0.y-this.currentRawLocYLev0}
+        const clickDegrees = Math.atan2(locFromCenterLev0.y, locFromCenterLev0.x)*180/Math.PI;
+        this.currentArrowLocDegrees =
+           clickDegrees - this.pressedDegrees;
+        while (this.currentArrowLocDegrees> 180) this.currentArrowLocDegrees -= 360;
+        while (this.currentArrowLocDegrees<=-180) this.currentArrowLocDegrees += 360;
+        //console.log( locFromCenterLev0.x.toFixed(1), locFromCenterLev0.y.toFixed(1), clickDegrees.toFixed(1)+DEG, this.pressedDegrees.toFixed(1)+DEG)  ;
+        //console.log(clickDegrees.toFixedthis.currentArrowLocDegrees)
       }
 
       this.#redraw();
@@ -456,6 +486,7 @@ class JoyStick {
     this.pressedYLev0 = null;
     this.pressedXLev1 = null;
     this.pressedYLev1 = null;
+    this.pressedDegrees = null;
     // If required reset position store variable
     if (this.autoReturnToCenter) {
       this.currentRawLocXLev0 = this.startRawLocXLev0;
@@ -562,6 +593,7 @@ class JoyStick {
       pressedYLev0: this.pressedYLev0,
       pressedXLev1: this.pressedXLev1,
       pressedYLev1: this.pressedYLev1,
+      pressedDegrees: this.pressedDegrees,
       width: this.width,
       height: this.height,
     };
