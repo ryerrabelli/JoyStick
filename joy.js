@@ -108,6 +108,8 @@ class JoyStick {
       this.moveRelativeToInitialMouseDown = (typeof parameters.moveRelativeToInitialMouseDown === "undefined" ? false : parameters.moveRelativeToInitialMouseDown);
 
     this.joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
+    this.hasArrows = (typeof parameters.hasArrows === "undefined" ? false : parameters.hasArrows);
+    this.arrowStartingDegrees = (typeof parameters.hasArrows === "undefined" ? 0 : parameters.hasArrows);
 
     // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
     this.startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
@@ -280,9 +282,9 @@ class JoyStick {
     this.context.stroke();
 
     if (this.joystickLevels===2) {
-          // Get Lev1 coordinates relative to the entire canvas, not just Lev1 relative to Lev0
-      const currentRawLocXLev1Canvas = this.currentRawLocXLev1-this.centerRawLocXLev1 + this.currentRawLocXLev0;
-      const currentRawLocYLev1Canvas = this.currentRawLocYLev1-this.centerRawLocYLev1 + this.currentRawLocYLev0;
+      // Get Lev1 coordinates relative to the entire canvas, not just Lev1 relative to Lev0
+      const currentRawLocXLev1Canvas = this.currentRawLocXLev1 - this.centerRawLocXLev1 + this.currentRawLocXLev0;
+      const currentRawLocYLev1Canvas = this.currentRawLocYLev1 - this.centerRawLocYLev1 + this.currentRawLocYLev0;
       // Get center of the Lev1 area relative to the entire canvas
       const centerRawLocXLev1Canvas = this.currentRawLocXLev0;
       const centerRawLocYLev1Canvas = this.currentRawLocYLev0;
@@ -291,7 +293,7 @@ class JoyStick {
 
       const grdLev1 = this.context.createRadialGradient(
         centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, 1,
-        centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, this.maxMoveStickLev1*2);
+        centerRawLocXLev1Canvas, centerRawLocYLev1Canvas, this.maxMoveStickLev1 * 2);
       this.internalFillColorLev1 = this.internalFillColor;  //"#0000AA";
       this.internalStrokeColorLev1 = this.internalStrokeColor;  //"#000033";
       this.internalLineWidthLev1 = this.internalLineWidth;
@@ -304,6 +306,53 @@ class JoyStick {
       this.context.arc(currentRawLocXLev1Canvas, currentRawLocYLev1Canvas, this.internalRadiusLev1, 0, TWO_PI, false);
       this.context.fill();
       this.context.stroke();
+    }
+
+    if (this.hasArrows) {
+      // Draw arrows
+      this.context.lineWidth = this.internalLineWidthLev1 * 1.5;
+      this.context.strokeStyle = "#CCC";
+      this.context.fillStyle = "#CCC";
+
+      const arrowCurveDegrees = 60;
+      const arrowCurveRadius = this.internalRadiusLev0 * 1.5;
+      const arrowHeadLengthDegrees = 20;
+
+      // Left arrow, facing upward (clockwise)
+      this.context.beginPath();
+      this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, arrowCurveRadius,
+        (180 + this.arrowStartingDegrees - arrowCurveDegrees / 2) * Math.PI / 180,
+        (180 + this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180, false);
+      this.context.stroke();
+      this.context.beginPath();
+      this.context.moveTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * 1.15 * Math.cos((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * 1.15 * Math.sin((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
+      this.context.lineTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * 0.85 * Math.cos((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * 0.85 * Math.sin((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
+      this.context.lineTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * Math.cos((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * Math.sin((180 + this.arrowStartingDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180));
+      this.context.fill();
+
+      // Right arrow, facing downward (counterclockwise)
+      this.context.beginPath();
+      this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, arrowCurveRadius,
+        (this.arrowStartingDegrees - arrowCurveDegrees / 2) * Math.PI / 180,
+        (this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180, false);
+      this.context.stroke();
+      this.context.beginPath();
+      this.context.moveTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * 1.15 * Math.cos((this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * 1.15 * Math.sin((this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
+      this.context.lineTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * 0.85 * Math.cos((this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * 0.85 * Math.sin((this.arrowStartingDegrees + arrowCurveDegrees / 2) * Math.PI / 180));
+      this.context.lineTo(
+        this.currentRawLocXLev0 + arrowCurveRadius * Math.cos((this.arrowStartingDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180),
+        this.currentRawLocYLev0 + arrowCurveRadius * Math.sin((this.arrowStartingDegrees + arrowCurveDegrees / 2 + arrowHeadLengthDegrees) * Math.PI / 180));
+      this.context.fill();
     }
 
   }
