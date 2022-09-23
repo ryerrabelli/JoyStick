@@ -112,6 +112,8 @@ class JoyStick {
     this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 2 : parameters.arrowCount);
     // This is the position of the first arrow if there are multiple arrows
     this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
+    this.minArrowLocDegrees = (typeof parameters.minArrowLocDegrees === "undefined" ? -180 : parameters.minArrowLocDegrees);
+    this.maxArrowLocDegrees = (typeof parameters.maxArrowLocDegrees === "undefined" ? +180 : parameters.maxArrowLocDegrees);
     
     // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
     this.startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
@@ -270,6 +272,10 @@ class JoyStick {
     if ( (this.centerRawLocXLev0-this.currentRawLocXLev0) > this.maxMoveStickLev0) this.currentRawLocXLev0 = this.centerRawLocXLev0 - this.maxMoveStickLev0;
     if ( (this.currentRawLocYLev0-this.centerRawLocYLev0) > this.maxMoveStickLev0) this.currentRawLocYLev0 = this.centerRawLocYLev0 + this.maxMoveStickLev0;
     if ( (this.centerRawLocYLev0-this.currentRawLocYLev0) > this.maxMoveStickLev0) this.currentRawLocYLev0 = this.centerRawLocYLev0 - this.maxMoveStickLev0;
+
+    // Bound the arrow rotation by the min and max
+    if (this.currentArrowLocDegrees < this.minArrowLocDegrees) this.currentArrowLocDegrees = this.minArrowLocDegrees;
+    if (this.currentArrowLocDegrees > this.maxArrowLocDegrees) this.currentArrowLocDegrees = this.maxArrowLocDegrees;
 
     if (this.joystickLevels===2) {
       // prevent the level 2 circle from being beyond maxMoveStickLev1
