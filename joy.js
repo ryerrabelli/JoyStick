@@ -311,12 +311,12 @@ class JoyStick {
 
     if (this.arrowCount>0) {
       // Draw arrows
-      this.context.lineWidth = this.internalLineWidthLev1 * 1.5;
+      this.context.lineWidth = this.internalLineWidthLev0 * 1.5;
       this.context.strokeStyle = "#CCC";
       this.context.fillStyle = "#CCC";
 
-      const arrowCurveDegrees = 60;
       const arrowCurveRadius = this.internalRadiusLev0 * 1.5;
+      const arrowCurveDegrees = 60;
       const arrowHeadLengthDegrees = 20;
 
       for (let ind=0; ind<this.arrowCount; ind++) {
@@ -327,6 +327,7 @@ class JoyStick {
           (centerDegrees - arrowCurveDegrees / 2) * Math.PI / 180,
           (centerDegrees + arrowCurveDegrees / 2) * Math.PI / 180, false);
         this.context.stroke();
+
         // Draw arrowhead
         this.context.beginPath();
         this.context.moveTo(  // outermost point of arrowhead
