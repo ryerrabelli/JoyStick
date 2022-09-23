@@ -295,6 +295,68 @@ class JoyStick {
     this.context.fill();
     this.context.stroke();
 
+    if (this.arrowCount>0) {
+      // Draw arrows
+      this.context.lineWidth = this.internalLineWidth * 1.5;
+
+      // Draw tick mark on the Lev0 joystick to indicate rotation on it
+      this.context.beginPath();
+      this.context.moveTo(
+        this.currentRawLocXLev0 + this.internalRadiusLev0*1.0 * Math.cos((this.currentArrowLocDegrees-90) * Math.PI/180),
+        this.currentRawLocYLev0 + this.internalRadiusLev0*1.0 * Math.sin((this.currentArrowLocDegrees-90) * Math.PI/180));
+      this.context.lineTo(
+        this.currentRawLocXLev0 + this.internalRadiusLev0*0.7 * Math.cos((this.currentArrowLocDegrees-90) * Math.PI/180),
+        this.currentRawLocYLev0 + this.internalRadiusLev0*0.7 * Math.sin((this.currentArrowLocDegrees-90) * Math.PI/180));
+      this.context.stroke();
+
+
+      for (let ind=0; ind<this.arrowCount; ind++) {
+        const centerDegrees = this.currentArrowLocDegrees + ind*360/this.arrowCount;
+
+        this.context.strokeStyle = "#CCC";
+        // Draw tick mark in the middle of the arrow line
+        this.context.beginPath();
+        this.context.moveTo(
+          this.currentRawLocXLev0 + this.arrowCurveRadius*1.08 * Math.cos(centerDegrees * Math.PI/180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius*1.08 * Math.sin(centerDegrees * Math.PI/180));
+        this.context.lineTo(
+          this.currentRawLocXLev0 + this.arrowCurveRadius*0.92 * Math.cos(centerDegrees * Math.PI/180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius*0.92 * Math.sin(centerDegrees * Math.PI/180));
+        this.context.stroke();
+
+        this.context.strokeStyle = grdLev0;
+        this.context.fillStyle = grdLev0;
+
+        // Draw circle in the middle of the arrow line
+        this.context.beginPath();
+        this.context.arc(
+          this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos(centerDegrees * Math.PI/180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin(centerDegrees * Math.PI/180),
+          this.arrowCurveRadius*0.05, 0, TWO_PI, false);
+        this.context.fill();
+
+        // Draw arrow curved line
+        this.context.beginPath();
+        this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, this.arrowCurveRadius,
+          (centerDegrees - this.arrowCurveDegrees / 2) * Math.PI / 180,
+          (centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180, false);
+        this.context.stroke();
+
+        // Draw arrowhead
+        this.context.beginPath();
+        this.context.moveTo(  // outermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 1.15 * Math.cos((centerDegrees + this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 1.15 * Math.sin((centerDegrees + this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2) * Math.PI / 180));
+        this.context.lineTo(  // innermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 0.85 * Math.cos((centerDegrees + this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 0.85 * Math.sin((centerDegrees + this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2) * Math.PI / 180));
+        this.context.lineTo(  // the acute point of arrowhead
+          this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos((centerDegrees + this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin((centerDegrees + this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2) * Math.PI / 180));
+        this.context.fill();
+      }
+    }
+
     if (this.joystickLevels===2) {
       // Get Lev1 coordinates relative to the entire canvas, not just Lev1 relative to Lev0
       const currentRawLocXLev1Canvas = this.currentRawLocXLev1 - this.centerRawLocXLev1 + this.currentRawLocXLev0;
@@ -320,36 +382,6 @@ class JoyStick {
       this.context.arc(currentRawLocXLev1Canvas, currentRawLocYLev1Canvas, this.internalRadiusLev1, 0, TWO_PI, false);
       this.context.fill();
       this.context.stroke();
-    }
-
-    if (this.arrowCount>0) {
-      // Draw arrows
-      this.context.lineWidth = this.internalLineWidth * 1.5;
-      this.context.strokeStyle = "#CCC";
-      this.context.fillStyle = "#CCC";
-
-      for (let ind=0; ind<this.arrowCount; ind++) {
-        const centerDegrees = this.currentArrowLocDegrees + ind*360/this.arrowCount;
-        // Draw arrow curved line
-        this.context.beginPath();
-        this.context.arc(this.currentRawLocXLev0, this.currentRawLocYLev0, this.arrowCurveRadius,
-          (centerDegrees - this.arrowCurveDegrees / 2) * Math.PI / 180,
-          (centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180, false);
-        this.context.stroke();
-
-        // Draw arrowhead
-        this.context.beginPath();
-        this.context.moveTo(  // outermost point of arrowhead base
-          this.currentRawLocXLev0 + this.arrowCurveRadius * 1.15 * Math.cos((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180),
-          this.currentRawLocYLev0 + this.arrowCurveRadius * 1.15 * Math.sin((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180));
-        this.context.lineTo(  // innermost point of arrowhead base
-          this.currentRawLocXLev0 + this.arrowCurveRadius * 0.85 * Math.cos((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180),
-          this.currentRawLocYLev0 + this.arrowCurveRadius * 0.85 * Math.sin((centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180));
-        this.context.lineTo(  // the acute point of arrowhead
-          this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos((centerDegrees + this.arrowCurveDegrees / 2 + this.arrowHeadLengthDegrees) * Math.PI / 180),
-          this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin((centerDegrees + this.arrowCurveDegrees / 2 + this.arrowHeadLengthDegrees) * Math.PI / 180));
-        this.context.fill();
-      }
     }
 
   }
