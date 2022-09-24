@@ -135,8 +135,12 @@ export class JoyStick {
     this.joystickLevels = (typeof parameters.joystickLevels === "undefined" ? 1 : parameters.joystickLevels);
 
     // Normalized values are from 0 to 1 (inclusive) with 0 being the bottommost or leftmost part of the screen
-    this.startNormLocXLev0 = (typeof parameters.startNormLocX === "undefined" ? 0.5 : parameters.startNormLocX),
-      this.startNormLocYLev0 = (typeof parameters.startNormLocY === "undefined" ? 0.5 : parameters.startNormLocY);
+    if (typeof parameters.startNormLocXLev0 !== "undefined")  this.startNormLocXLev0 = parameters.startNormLocXLev0;
+    else if (typeof parameters.startNormLocX !== "undefined")  this.startNormLocXLev0 = parameters.startNormLocX;
+    else this.startNormLocXLev0 = 0.5;
+    if (typeof parameters.startNormLocYLev0 !== "undefined")  this.startNormLocYLev0 = parameters.startNormLocYLev0;
+    else if (typeof parameters.startNormLocY !== "undefined")  this.startNormLocYLev0 = parameters.startNormLocY;
+    else this.startNormLocYLev0 = 0.5;
     this.startNormLocXLev1 = (typeof parameters.startNormLocXLev1 === "undefined" ? 0.5 : parameters.startNormLocXLev1),
       this.startNormLocYLev1 = (typeof parameters.startNormLocYLev1 === "undefined" ? 0.0 : parameters.startNormLocYLev1);
 
@@ -153,7 +157,7 @@ export class JoyStick {
 
     this.arrowCount = (typeof parameters.arrowCount === "undefined" ? 0 : parameters.arrowCount);
     this.isRotatable = (typeof parameters.isRotatable === "undefined" ? this.arrowCount>0 : parameters.isRotatable);
-    // This degree position referes to the position of the first arrow if there are multiple arrows
+    // This degree position refers to the position of the first arrow if there are multiple arrows
     this.startArrowLocDegrees = (typeof parameters.startArrowLocDegrees === "undefined" ? 0 : parameters.startArrowLocDegrees);
     this.minArrowLocDegrees = (typeof parameters.minArrowLocDegrees === "undefined" ? -180 : parameters.minArrowLocDegrees);
     this.maxArrowLocDegrees = (typeof parameters.maxArrowLocDegrees === "undefined" ? +180 : parameters.maxArrowLocDegrees);
@@ -186,11 +190,14 @@ export class JoyStick {
     this.centerRawLocYLev0 = this.canvas.height / 2;
     this.centerRawLocXLev1 = this.maxMoveStickLev1;
     this.centerRawLocYLev1 = this.maxMoveStickLev1;
-    this.startRawLocXLev0 = this.canvas.width * this.startNormLocXLev0;
-    this.startRawLocYLev0 = this.canvas.height * (1-this.startNormLocYLev0);
+    (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
+    //this.startRawLocXLev0 = this.canvas.width * this.startNormLocXLev0;
+    //this.startRawLocYLev0 = this.canvas.height * (1-this.startNormLocYLev0);
+    this.startRawLocXLev0 = (this.centerRawLocXLev0-this.maxMoveStickLev0) + this.maxMoveStickLev0*2 * this.startNormLocXLev0;
+    this.startRawLocYLev0 = (this.centerRawLocXLev0-this.maxMoveStickLev0) + this.maxMoveStickLev0*2 * (1-this.startNormLocYLev0);
     this.startRawLocXLev1 = this.maxMoveStickLev1*2 * this.startNormLocXLev1;
     this.startRawLocYLev1 = this.maxMoveStickLev1*2 * (1-this.startNormLocYLev1);
-
+    console.log(this.startNormLocXLev0, this.startNormLocYLev0)
 
 
     this.setupParameters = {
@@ -314,7 +321,6 @@ export class JoyStick {
       if ( this.currentRawLocYLev1-this.centerRawLocYLev1 > this.maxMoveStickLev1) this.currentRawLocYLev1 = this.centerRawLocYLev1 + this.maxMoveStickLev1;
       if ( this.centerRawLocYLev1-this.currentRawLocYLev1 > this.maxMoveStickLev1) this.currentRawLocYLev1 = this.centerRawLocYLev1 - this.maxMoveStickLev1;
     }
-
     this.context.beginPath();
 
     // create radial gradient for fill color
