@@ -60,6 +60,10 @@ let StickStatus = {
 const TWO_PI = 2 * Math.PI;  // circumference of unit circle aka 360 degrees in radians
 const DEG = "\u00B0";   // can't just console.log the ° symbol, have to use the unicode symbol to format correctly
 
+function isNullOrUndef(myVar) {
+  return myVar === null || myVar === undefined;
+}
+
 /**
  * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
  * @constructor
@@ -77,8 +81,8 @@ const DEG = "\u00B0";   // can't just console.log the ° symbol, have to use the
  *  maxMoveStick {Number} (optional)
  * @param callback {StickStatus} -
  */
-class JoyStick {
-  // define private variables
+export class JoyStick {
+  // define private variables. Private variables need to be defined up front.
   #directionHorizontalLimitPos;
   #directionHorizontalLimitNeg;
   #directionVerticalLimitPos;
@@ -929,3 +933,4 @@ class JoyStick {
     return this.#getCardinalDirection();
   };
 }
+
