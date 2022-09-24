@@ -63,6 +63,26 @@ const DEG = "\u00B0";   // can't just console.log the ° symbol, have to use the
 function isNullOrUndef(myVar) {
   return myVar === null || myVar === undefined;
 }
+function numberDictToStr(dict1, fractionDigits=1) {
+  if (dict1 instanceof Array) {
+    const arr = []
+    for (let ind = 0; ind < dict1.length; ind++) {
+      if (typeof dict1[ind]==="number" || dict1[ind] instanceof Number) { // instanceof won't work for primitive types
+        arr.push(dict1[ind].toFixed(fractionDigits));
+      } else arr.push(dict1[ind]);
+    }
+    return arr;
+  } else if (dict1 instanceof Object) {  // don't check for typeof dict===object bc dict=null will return true
+    const dict2 = {}
+    for (const key in dict1) {
+      if (typeof dict1[key]==="number" || dict1[key] instanceof Number) { // instanceof won't work for primitive types
+        dict2[key] = dict1[key].toFixed(fractionDigits);
+      } else dict2[key] = dict1[key];
+    }
+    return dict2;
+  } else return dict1;
+
+}
 
 /**
  * @desc Principal object that draw a joystick, you only need to initialize the object and suggest the HTML container
@@ -222,7 +242,7 @@ export class JoyStick {
     this.currentRawLocYLev0 = this.startRawLocYLev0;
     this.currentRawLocXLev1 = this.startRawLocXLev1;
     this.currentRawLocYLev1 = this.startRawLocYLev1;
-    this.currentArrowLocDegrees = this.startArrowLocDegrees;
+    this.currentRawLocDeg = this.startArrowLocDegrees;
 
 
     if ("ontouchstart" in document.documentElement) { // Check if the device support the touch or not
@@ -284,8 +304,8 @@ export class JoyStick {
     if ( (this.centerRawLocYLev0-this.currentRawLocYLev0) > this.maxMoveStickLev0) this.currentRawLocYLev0 = this.centerRawLocYLev0 - this.maxMoveStickLev0;
 
     // Bound the arrow rotation by the min and max
-    if (this.currentArrowLocDegrees < this.minArrowLocDegrees) this.currentArrowLocDegrees = this.minArrowLocDegrees;
-    if (this.currentArrowLocDegrees > this.maxArrowLocDegrees) this.currentArrowLocDegrees = this.maxArrowLocDegrees;
+    if (this.currentRawLocDeg < this.minArrowLocDegrees) this.currentRawLocDeg = this.minArrowLocDegrees;
+    if (this.currentRawLocDeg > this.maxArrowLocDegrees) this.currentRawLocDeg = this.maxArrowLocDegrees;
 
     if (this.joystickLevels===2) {
       // prevent the level 2 circle from being beyond maxMoveStickLev1
@@ -318,16 +338,16 @@ export class JoyStick {
       // Draw tick mark on the Lev0 joystick to indicate rotation on it
       this.context.beginPath();
       this.context.moveTo(
-        this.currentRawLocXLev0 + this.internalRadiusLev0*1.0 * Math.cos((this.currentArrowLocDegrees-90) * Math.PI/180),
-        this.currentRawLocYLev0 + this.internalRadiusLev0*1.0 * Math.sin((this.currentArrowLocDegrees-90) * Math.PI/180));
+        this.currentRawLocXLev0 + this.internalRadiusLev0*1.0 * Math.cos((this.currentRawLocDeg-90) * Math.PI/180),
+        this.currentRawLocYLev0 + this.internalRadiusLev0*1.0 * Math.sin((this.currentRawLocDeg-90) * Math.PI/180));
       this.context.lineTo(
-        this.currentRawLocXLev0 + this.internalRadiusLev0*0.7 * Math.cos((this.currentArrowLocDegrees-90) * Math.PI/180),
-        this.currentRawLocYLev0 + this.internalRadiusLev0*0.7 * Math.sin((this.currentArrowLocDegrees-90) * Math.PI/180));
+        this.currentRawLocXLev0 + this.internalRadiusLev0*0.7 * Math.cos((this.currentRawLocDeg-90) * Math.PI/180),
+        this.currentRawLocYLev0 + this.internalRadiusLev0*0.7 * Math.sin((this.currentRawLocDeg-90) * Math.PI/180));
       this.context.stroke();
 
 
       for (let ind=0; ind<this.arrowCount; ind++) {
-        const centerDegrees = this.currentArrowLocDegrees + ind*360/this.arrowCount;
+        const centerDegrees = this.currentRawLocDeg + ind*360/this.arrowCount;
 
         this.context.strokeStyle = "#CCC";
         // Draw tick mark in the middle of the arrow line
@@ -358,7 +378,7 @@ export class JoyStick {
           (centerDegrees + this.arrowCurveDegrees / 2) * Math.PI / 180, false);
         this.context.stroke();
 
-        // Draw arrowhead
+        // Draw arrowhead that is furthestmost counterclockwise
         this.context.beginPath();
         this.context.moveTo(  // outermost point of arrowhead base
           this.currentRawLocXLev0 + this.arrowCurveRadius * 1.15 * Math.cos((centerDegrees + this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2) * Math.PI / 180),
@@ -369,6 +389,19 @@ export class JoyStick {
         this.context.lineTo(  // the acute point of arrowhead
           this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos((centerDegrees + this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2) * Math.PI / 180),
           this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin((centerDegrees + this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2) * Math.PI / 180));
+        this.context.fill();
+
+        // Draw arrowhead that is furthestmost counterclockwise
+        this.context.beginPath();
+        this.context.moveTo(  // outermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 1.15 * Math.cos((centerDegrees - (this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2)) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 1.15 * Math.sin((centerDegrees - (this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2)) * Math.PI / 180));
+        this.context.lineTo(  // innermost point of arrowhead base
+          this.currentRawLocXLev0 + this.arrowCurveRadius * 0.85 * Math.cos((centerDegrees - (this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2)) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * 0.85 * Math.sin((centerDegrees - (this.arrowCurveDegrees/2 - this.arrowHeadLengthDegrees/2)) * Math.PI / 180));
+        this.context.lineTo(  // the acute point of arrowhead
+          this.currentRawLocXLev0 + this.arrowCurveRadius * Math.cos((centerDegrees - (this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2)) * Math.PI / 180),
+          this.currentRawLocYLev0 + this.arrowCurveRadius * Math.sin((centerDegrees - (this.arrowCurveDegrees/2 + this.arrowHeadLengthDegrees/2)) * Math.PI / 180));
         this.context.fill();
       }
     }
@@ -411,7 +444,7 @@ export class JoyStick {
   }
 
   #updateStickStatus(newCurrentRawLocXLev0, newCurrentRawLocYLev0,
-                     newCurrentRawLocXLev1=null, newCurrentRawLocYLev1=null, newCurrentArrowLocDegrees=null) {
+                     newCurrentRawLocXLev1=null, newCurrentRawLocYLev1=null, newcurrentRawLocDeg=null) {
     StickStatus.rawLocXLev0 = newCurrentRawLocXLev0;
     StickStatus.rawLocYLev0 = newCurrentRawLocYLev0;
     StickStatus.dirLocXLev0 =   (100 * (newCurrentRawLocXLev0 - this. centerRawLocXLev0) / this.maxMoveStickLev0).toFixed();
@@ -430,10 +463,10 @@ export class JoyStick {
       //StickStatus.xNormLevCombined = this.GetNormLocLevCombined();
       //StickStatus.yNormLevCombined = this.GetNormLocLevCombined();
     }
-    if (!isNullOrUndef(newCurrentArrowLocDegrees)) {
-      StickStatus.rawLocDeg = newCurrentArrowLocDegrees;
+    if (!isNullOrUndef(newcurrentRawLocDeg)) {
+      StickStatus.rawLocDeg = newcurrentRawLocDeg;
       const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
-      StickStatus.normLocDeg = (newCurrentArrowLocDegrees - this.minArrowLocDegrees)/range;
+      StickStatus.normLocDeg = (newcurrentRawLocDeg - this.minArrowLocDegrees)/range;
     }
 
     StickStatus.cardinalDirection = this.#getCardinalDirection();
@@ -466,10 +499,10 @@ export class JoyStick {
       }
       if (this.isRotatable) {
         let locAngleDegrees = Math.atan2(this.pressedYLev0, this.pressedXLev0) * 180/Math.PI;
-        // make locAngleDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
-        while (locAngleDegrees - this.currentArrowLocDegrees <= -180)  locAngleDegrees += 360;
-        while (locAngleDegrees - this.currentArrowLocDegrees > 180)  locAngleDegrees -= 360;
-        this.pressedDegrees = locAngleDegrees - this.currentArrowLocDegrees;
+        // make locAngleDegrees within 360 degrees of this.currentRawLocDeg so that this.currentRawLocDeg doesn't have to be bounded [-180, 180]
+        while (locAngleDegrees - this.currentRawLocDeg <= -180)  locAngleDegrees += 360;
+        while (locAngleDegrees - this.currentRawLocDeg > 180)  locAngleDegrees -= 360;
+        this.pressedDegrees = locAngleDegrees - this.currentRawLocDeg;
 
       }
 
@@ -520,13 +553,13 @@ export class JoyStick {
         this.currentRawLocXLev1 = locLev1.x - this.pressedXLev1;
         this.currentRawLocYLev1 = locLev1.y - this.pressedYLev1;
 
-      } else if (this.pressed==="arrow") {
+      } else if (this.pressed==="arrow") {  // for degree rotation
         const locFromCenterLev0 = {x:locLev0.x-this.currentRawLocXLev0, y:locLev0.y-this.currentRawLocYLev0}
         let clickDegrees = Math.atan2(locFromCenterLev0.y, locFromCenterLev0.x)*180/Math.PI;
-        // make clickDegrees within 360 degrees of this.currentArrowLocDegrees so that this.currentArrowLocDegrees doesn't have to be bounded [-180, 180]
-        while (clickDegrees - this.currentArrowLocDegrees <= -180)  clickDegrees += 360;
-        while (clickDegrees - this.currentArrowLocDegrees > 180)  clickDegrees -= 360;
-        this.currentArrowLocDegrees = clickDegrees - this.pressedDegrees;
+        // make clickDegrees within 360 degrees of this.currentRawLocDeg so that this.currentRawLocDeg doesn't have to be bounded [-180, 180]
+        while (clickDegrees - this.currentRawLocDeg <= -180)  clickDegrees += 360;
+        while (clickDegrees - this.currentRawLocDeg > 180)  clickDegrees -= 360;
+        this.currentRawLocDeg = clickDegrees - this.pressedDegrees;
       }
 
       this.#redraw();
@@ -534,7 +567,7 @@ export class JoyStick {
       // Set attribute of callback
       this.#updateStickStatus(
         this.currentRawLocXLev0, this.currentRawLocYLev0,
-        this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentArrowLocDegrees);
+        this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentRawLocDeg);
       this.callback(StickStatus);
     }
   }
@@ -555,7 +588,7 @@ export class JoyStick {
     // Set attribute of callback
     this.#updateStickStatus(
       this.currentRawLocXLev0, this.currentRawLocYLev0,
-      this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentArrowLocDegrees);
+      this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentRawLocDeg);
     this.callback(StickStatus);
   }
   #getCorrectedPositionOnCanvas(uncorrectedX, uncorrectedY) {
@@ -592,7 +625,7 @@ export class JoyStick {
     let horizontal = this.currentRawLocXLev0 - this.centerRawLocXLev0;
     let vertical = this.currentRawLocYLev0 - this.centerRawLocYLev0;
 
-    if (vertical >= this.directionVerticalLimitNeg && vertical <= this.#directionVerticalLimitPos) {
+    if (vertical >= this.#directionVerticalLimitNeg && vertical <= this.#directionVerticalLimitPos) {
       result = "C";
     }
     if (vertical < this.#directionVerticalLimitNeg) {
@@ -648,6 +681,7 @@ export class JoyStick {
       currentRawLocYLev0: this.currentRawLocYLev0,
       currentRawLocXLev1: this.currentRawLocXLev1,
       currentRawLocYLev1: this.currentRawLocYLev1,
+      currentRawLocDeg: this.currentRawLocDeg,
       pressed: this.pressed,
       pressedXLev0: this.pressedXLev0,
       pressedYLev0: this.pressedYLev0,
@@ -685,7 +719,6 @@ export class JoyStick {
     else if (level===1) return this.currentRawLocXLev1;
 
   };
-
   /**
    * @desc The Y position of the cursor relative to the this.canvas that contains it and to its dimensions
    * @param {number?} level
@@ -696,7 +729,7 @@ export class JoyStick {
     else if (level===1) return this.currentRawLocYLev1;
   };
   GetRawLocDeg({level=null}={}) {
-    if (isNullOrUndef(level) || level===0) return this.currentArrowLocDegrees;
+    if (isNullOrUndef(level) || level===0) return this.currentRawLocDeg;
     else return undefined;
   }
   /**
@@ -707,17 +740,19 @@ export class JoyStick {
   GetRawLoc({level=null}={}) {
     return [this.GetRawLocX({level:level}), this.GetRawLocY({level:level}), this.GetRawLocDeg({level:level})];
   }
-  SetRawLoc(rawLocX, rawLocY, {doRedraw=true, level=null}={}) {
+  SetRawLoc(rawLocX, rawLocY, rawLocDeg, {doRedraw=true, level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       if (!isNullOrUndef(rawLocX)) this.currentRawLocXLev0 = rawLocX;
       if (!isNullOrUndef(rawLocY)) this.currentRawLocYLev0 = rawLocY;
+      if (!isNullOrUndef(rawLocY)) this.currentRawLocDeg = rawLocDeg;
       if (doRedraw) this.#redraw();
       return [this.currentRawLocXLev0, this.currentRawLocYLev0];
     } else if (level===1) {
       if (!isNullOrUndef(rawLocX)) this.currentRawLocXLev1 = rawLocX;
       if (!isNullOrUndef(rawLocY)) this.currentRawLocYLev1 = rawLocY;
+      if (!isNullOrUndef(rawLocY)) this.currentRawLocDeg = rawLocDeg;
       if (doRedraw) this.#redraw();
-      return [this.currentRawLocXLev1, this.currentRawLocYLev1];
+      return [this.currentRawLocXLev1, this.currentRawLocYLev1, this.currentRawLocDeg];
     }
 
 
@@ -726,8 +761,8 @@ export class JoyStick {
   GetRawLocLev1() {
     return this.GetRawLoc({level:1});
   }
-  SetRawLocLev1(rawLocXLev1, rawLocYLev1, doRedraw=true) {
-    return this.SetRawLoc(rawLocXLev1,rawLocYLev1,{doRedraw: doRedraw, level:1});
+  SetRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, doRedraw=true) {
+    return this.SetRawLoc(rawLocXLev1,rawLocYLev1,rawLocDegLev1,{doRedraw: doRedraw, level:1});
   };
 
   /**
@@ -752,11 +787,11 @@ export class JoyStick {
   };
   GetNormLocDeg({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
-      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentArrowLocDegrees)) {
+      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentRawLocDeg)) {
         return null;
       } else {
         const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
-        return (this.currentArrowLocDegrees - this.minArrowLocDegrees)/range;
+        return (this.currentRawLocDeg - this.minArrowLocDegrees)/range;
       }
     } else return undefined;
 
@@ -806,15 +841,20 @@ export class JoyStick {
   }
 
   SetNormLocX(normX, doRedraw=true) {
-    this.SetNormLoc(normX, null, {doRedraw:doRedraw});
+    this.SetNormLoc(normX, null, null,{doRedraw:doRedraw});
     return this.currentRawLocXLev0;
   };
   SetNormLocY(normY, doRedraw=true) {
-    this.SetNormLoc(null, normY, {doRedraw:doRedraw});
+    this.SetNormLoc(null, normY, null,{doRedraw:doRedraw});
     return this.currentRawLocYLev0;
   };
+  SetNormLocDeg(normDeg, doRedraw=true) {
+    this.SetNormLoc(null, null, normDeg,{doRedraw:doRedraw});
+    return this.currentRawLocDeg;
+  };
+
   /*
-    // EQUATION REARRANGEMENT
+    // EQUATION REARRANGEMENT MATH
     this.currentRawLocXLev0 = this.centerRawLocXLev0 + maxMoveStickLev0*(2*normXLev0 - 1);
     this.currentRawLocXLev1 = this.centerRawLocXLev1 + maxMoveStickLev0*(2*normXLev1 - 1);
     normXLev0 == (1 + (currentRawLocXLev0 - this.centerRawLocXLev0) / maxMoveStickLev0)/2.0;
@@ -825,7 +865,7 @@ export class JoyStick {
     normLev0 == normLevCombined*(1+relativeJoystickPower) - normLev1*relativeJoystickPower
     normLev1 == (normLevCombined*(1+relativeJoystickPower) - normLev0) / relativeJoystickPower
    */
-  SetNormLoc(normX, normY, {doRedraw = true, level=null}={}) {
+  SetNormLoc(normX, normY, normDeg, {doRedraw = true, level=null}={}) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
       const relativeJoystickPower = 0.2;
 
@@ -846,7 +886,6 @@ export class JoyStick {
         const newNormLocXLev0 = (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
         const newNormLocXLev1 = (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
         const newNormLocXLevCombined = (newNormLocXLev0 + newNormLocXLev1*relativeJoystickPower) / (1+relativeJoystickPower);
-
       }
 
       if (!isNullOrUndef(normY)) {
@@ -857,8 +896,13 @@ export class JoyStick {
           this.currentRawLocYLev0 = this.centerRawLocYLev0 - this.maxMoveStickLev0*(2*normYLev0 - 1);
           this.currentRawLocYLev1 = this.centerRawLocYLev1 - this.maxMoveStickLev1*(2*normYLev1 - 1);
         }
-
       }
+
+      if (!isNullOrUndef(normDeg)) {
+        //console.log(normDeg)
+        this.currentRawLocDeg = this.minArrowLocDegrees + (this.maxArrowLocDegrees-this.minArrowLocDegrees)*normDeg;
+      }
+
       if (doRedraw) this.#redraw();
       const newNormLocLevCombined = this.GetNormLocLevCombined();
       return newNormLocLevCombined;
@@ -866,20 +910,20 @@ export class JoyStick {
     } else if (level===0) {
       if (!isNullOrUndef(normX)) this.currentRawLocXLev0 = this.centerRawLocXLev0 + this.maxMoveStickLev0*(2*normX - 1);
       if (!isNullOrUndef(normY)) this.currentRawLocYLev0 = this.centerRawLocYLev0 - this.maxMoveStickLev0*(2*normY - 1);
+      if (!isNullOrUndef(normDeg)) this.currentRawLocDeg = this.minArrowLocDegrees + (this.maxArrowLocDegrees-this.minArrowLocDegrees)*normDeg;
       if (doRedraw) this.#redraw();
       return [this.currentRawLocXLev0, this.currentRawLocYLev0];
 
-    } else if (level>=1) {
+    } else if (level===1) {
       if (!isNullOrUndef(normX)) this.currentRawLocXLev1 = this.centerRawLocXLev1 + this.maxMoveStickLev1*(2*normX - 1);
       if (!isNullOrUndef(normY)) this.currentRawLocYLev1 = this.centerRawLocYLev1 - this.maxMoveStickLev1*(2*normY - 1);
       if (doRedraw) this.#redraw();
       return [this.currentRawLocXLev1, this.currentRawLocYLev1];
     }
 
-
   };
-  SetNormLocLev1(normXLev1, normYLev1, doRedraw=true) {
-    this.SetNormLoc(normXLev1,normYLev1,{doRedraw: doRedraw, level: 1})
+  SetNormLocLev1(normXLev1, normYLev1, normDegLev1, doRedraw=true) {
+    this.SetNormLoc(normXLev1,normYLev1,normDegLev1,{doRedraw: doRedraw, level: 1})
   };
 
   /**
@@ -892,7 +936,6 @@ export class JoyStick {
     } else if (level===1) {
       return (100 * ((this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)).toFixed();
     }
-
   };
   /**
    * @desc directional value of Y move of stick
@@ -907,11 +950,12 @@ export class JoyStick {
   };
   GetDirLocDeg({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
-      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentArrowLocDegrees)) {
+      if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentRawLocDeg)) {
         return null;
       } else {
         const range = this.maxArrowLocDegrees - this.minArrowLocDegrees;
-        return (100 * ((this.currentArrowLocDegrees - this.startArrowLocDegrees) / range)).toFixed();
+        const middle = (this.maxArrowLocDegrees + this.minArrowLocDegrees)/2;
+        return (100 * ((this.currentRawLocDeg - middle / range)).toFixed());
       }
     } else return undefined;
 
