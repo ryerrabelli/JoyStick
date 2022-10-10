@@ -984,12 +984,9 @@ export class JoyStick {
   };
 }
 
+// To allow backwards compatibility, allow function names like GetWidth() that reroute to the new function names ie getWidth()
 
-
-
-
-
-const oldFunctionNames = [
+const oldFnNames = [
   "GetGivenParameters",
   "GetSetupParameters",
   "GetWorkingParameters",
@@ -1025,14 +1022,13 @@ const oldFunctionNames = [
   "GetCardinalDirection",
 ]
 
-//JoyStick.prototype["GetNormLocX"] = JoyStick.prototype["getNormLocX"];
-//JoyStick.prototype.GetNormLocX = JoyStick.prototype.getNormLocX;
-
-for (let ind=0; ind < oldFunctionNames.length; ind++) {
-  const oldFunctionName = oldFunctionNames[ind];
-  const newFunctionName = oldFunctionName.substring(0,1).toLowerCase() + oldFunctionName.substring(1);
-  if (!isNullOrUndef(JoyStick.prototype[newFunctionName])) {
-    JoyStick.prototype[oldFunctionName] = JoyStick.prototype[newFunctionName];
+for (let ind=0; ind < oldFnNames.length; ind++) {
+  const oldFnName = oldFnNames[ind];
+  // Get newFnName by converting case of first letter ie GetWidth -> getWidth
+  const newFnName = oldFnName.substring(0,1).toLowerCase() + oldFnName.substring(1);
+  if (!isNullOrUndef(JoyStick.prototype[newFnName])) {
+    //JoyStick.prototype.GetNormLocX = JoyStick.prototype.getNormLocX;
+    JoyStick.prototype[oldFnName] = JoyStick.prototype[newFnName];
   }
 }
 
