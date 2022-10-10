@@ -102,12 +102,21 @@ function numberDictToStr(dict1, fractionDigits=1) {
  * @param callback {StickStatus} -
  */
 export class JoyStick {
+  //region Private variables
   // define private variables. Private variables need to be defined up front.
   #directionHorizontalLimitPos;
   #directionHorizontalLimitNeg;
   #directionVerticalLimitPos;
   #directionVerticalLimitNeg;
+  //endregion
 
+  //region Static methods
+  static getCombinedLevValue(normLev0, normLev1, {relativeJoystickPower=0.2}={}) {// create weighted sum value, then divide by max possible value
+    return (normLev0 + normLev1*relativeJoystickPower) / (1+relativeJoystickPower);
+  }
+  //endregion
+
+  //region constructor
   constructor(container, parameters, callback) {
     this.givenParameters = Object.assign({}, parameters);   // clone dict
     parameters = parameters || {};
@@ -143,6 +152,9 @@ export class JoyStick {
     else this.startNormLocYLev0 = 0.5;
     this.startNormLocXLev1 = (typeof parameters.startNormLocXLev1 === "undefined" ? 0.5 : parameters.startNormLocXLev1),
       this.startNormLocYLev1 = (typeof parameters.startNormLocYLev1 === "undefined" ? 0.0 : parameters.startNormLocYLev1);
+    // relativeJoystickPower represents the impact of Lev1 (fine control) compared to Lev0 (general control).
+    // Can be any positive number, although logically it should be less than 1 so Lev1 is finer control than Lev0.
+    this.relativeJoystickPower = (typeof parameters.relativeJoystickPower === "undefined" ? 0.2 : parameters.relativeJoystickPower);
 
     this.radiiDifference = (typeof parameters.radiiDifference === "undefined" ? 30 : parameters.radiiDifference);
     this.internalRadiusLev0 = (typeof parameters.internalRadius === "undefined" ? (this.width - (this.width/2 + 10) - this.radiiDifference) / 2 : parameters.internalRadius);
@@ -218,6 +230,7 @@ export class JoyStick {
       startNormLocYLev0: this.startNormLocYLev0,
       startNormLocXLev1: this.startNormLocXLev1,
       startNormLocYLev1: this.startNormLocYLev1,
+      relativeJoystickPower: this.relativeJoystickPower,
       radiiDifference: this.radiiDifference,
       internalRadiusLev0: this.internalRadiusLev0,
       internalRadiusLev1: this.internalRadiusLev1,
@@ -250,7 +263,6 @@ export class JoyStick {
     this.currentRawLocYLev1 = this.startRawLocYLev1;
     this.currentRawLocDeg = this.startArrowLocDegrees;
 
-
     if ("ontouchstart" in document.documentElement) { // Check if the device support the touch or not
       this.canvas.addEventListener("touchstart", event => this.#onTouchStart(event), false);
       document.addEventListener("touchmove", event => this.#onTouchMove(event), false);
@@ -266,10 +278,12 @@ export class JoyStick {
     this.#drawExternal();
     this.#drawInternal();
   }
+  //endregion
 
   /******************************************************
    * Private methods
    *****************************************************/
+  //region Private methods
     /**
    * @desc Draw the external circle used as reference position
    */
@@ -280,7 +294,6 @@ export class JoyStick {
     this.context.strokeStyle = this.externalStrokeColor;
     this.context.stroke();
   }
-
   /**
    * @desc Draw the internal stick in the current position the user have moved it
    */
@@ -656,10 +669,12 @@ export class JoyStick {
     return result;
   }
 
-    /******************************************************
+  //endregion Private
+
+  /******************************************************
    * Public methods
    *****************************************************/
-
+  //region Public methods
   /**
    * @desc Get the parameters given when initializing this object
    * @return dict
@@ -758,13 +773,6 @@ export class JoyStick {
     }
   }
 
-  getRawLocLev1() {
-    return this.getRawLoc({level:1});
-  }
-  setRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, {doRedraw=true}={}) {
-    return this.setRawLoc(rawLocXLev1,rawLocYLev1,rawLocDegLev1,{doRedraw: doRedraw, level:1});
-  }
-
   /**
    * @desc Normalized value of X move of stick
    * @param {number?} level
@@ -807,32 +815,20 @@ export class JoyStick {
     //if (level===0) return [this.getNormLocX(), this.getNormLocY(), this.getNormLocDeg()];
     //else if (level===1) return [this.getNormLocX({level:1}), this.getNormLocY({level:1}), this.getNormLocDeg({level:1})];
   }
-  getNormLocXLev1({}={}) {
-    return this.getNormLocX({level:1});
-  }
-  getNormLocYLev1({}={}) {
-    return this.getNormLocY({level:1});
-  }
-  getNormLocLev1({}={}) {
-    return this.getNormLoc({level:1});
-  }
 
-  getCombinedLevValue(normLev0, normLev1) {
-    const relativeJoystickPower = 0.2;
-    // create weighted sum value, then divide by max possible value
-    return (normLev0 + normLev1*relativeJoystickPower) / (1+relativeJoystickPower);
-  }
   getNormLocXLevCombined() {
-    const normLocXLevCombined = this.getCombinedLevValue(
+    const normLocXLevCombined = JoyStick.getCombinedLevValue(
       this.getNormLocX({level:0}),
-      this.getNormLocX({level:1})
+      this.getNormLocX({level:1}),
+      {relativeJoystickPower: this.relativeJoystickPower}
     );
     return normLocXLevCombined;
   }
   getNormLocYLevCombined() {
-    const normLocYLevCombined = this.getCombinedLevValue(
+    const normLocYLevCombined = JoyStick.getCombinedLevValue(
       this.getNormLocY({level:0}),
-      this.getNormLocY({level:1})
+      this.getNormLocY({level:1}),
+      {relativeJoystickPower: this.relativeJoystickPower}
     );
     return normLocYLevCombined;
   }
@@ -867,7 +863,6 @@ export class JoyStick {
    */
   setNormLoc(normX, normY, normDeg, {doRedraw = true, level=null}={}) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
-      const relativeJoystickPower = 0.2;
 
       if (!isNullOrUndef(normX)) {
         //const oldNormLocXLev0 = this.getNormLocX({level:0});
@@ -875,7 +870,7 @@ export class JoyStick {
         //const oldNormLocXLevCombined = this.getNormLocXLevCombined();
         const oldNormLocXLev0 = (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
         const oldNormLocXLev1 = (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
-        const oldNormLocXLevCombined = (oldNormLocXLev0 + oldNormLocXLev1*relativeJoystickPower) / (1+relativeJoystickPower);
+        const oldNormLocXLevCombined = (oldNormLocXLev0 + oldNormLocXLev1*this.relativeJoystickPower) / (1+this.relativeJoystickPower);
 
         if ( Math.abs(normX - oldNormLocXLevCombined) >= 0.0001 ) {
           let normXLev0 = normX;
@@ -885,7 +880,7 @@ export class JoyStick {
         }
         const newNormLocXLev0 = (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
         const newNormLocXLev1 = (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
-        const newNormLocXLevCombined = (newNormLocXLev0 + newNormLocXLev1*relativeJoystickPower) / (1+relativeJoystickPower);
+        const newNormLocXLevCombined = (newNormLocXLev0 + newNormLocXLev1*this.relativeJoystickPower) / (1+this.relativeJoystickPower);
       }
 
       if (!isNullOrUndef(normY)) {
@@ -920,10 +915,6 @@ export class JoyStick {
       if (doRedraw) this.#redraw();
       return [this.currentRawLocXLev1, this.currentRawLocYLev1];
     }
-  }
-  
-  setNormLocLev1(normXLev1, normYLev1, normDegLev1, {doRedraw=true}={}) {
-    this.setNormLoc(normXLev1,normYLev1,normDegLev1,{doRedraw: doRedraw, level: 1})
   }
 
   /**
@@ -975,6 +966,9 @@ export class JoyStick {
   getCardinalDirection() {
     return this.#getCardinalDirection();
   }
+
+  //endregion
+
 }
 
 // To allow backwards compatibility, allow function names like GetWidth() that reroute to the new function names ie getWidth()
@@ -990,15 +984,10 @@ const oldFnNames = [
   "GetRawLocDeg",
   "GetRawLoc",
   "SetRawLoc",
-  "GetRawLocLev1",
-  "SetRawLocLev1",
   "GetNormLocX",
   "GetNormLocY",
   "GetNormLocDeg",
   "GetNormLoc",
-  "GetNormLocXLev1",
-  "GetNormLocYLev1",
-  "GetNormLocLev1",
   "GetCombinedLevValue",
   "GetNormLocXLevCombined",
   "GetNormLocYLevCombined",
@@ -1007,7 +996,6 @@ const oldFnNames = [
   "SetNormLocY",
   "SetNormLocDeg",
   "SetNormLoc",
-  "SetNormLocLev1",
   "GetDirLocX",
   "GetDirLocY",
   "GetDirLocDeg",
