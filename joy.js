@@ -190,14 +190,13 @@ export class JoyStick {
     this.centerRawLocYLev0 = this.canvas.height / 2;
     this.centerRawLocXLev1 = this.maxMoveStickLev1;
     this.centerRawLocYLev1 = this.maxMoveStickLev1;
-    (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
+    //(1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
     //this.startRawLocXLev0 = this.canvas.width * this.startNormLocXLev0;
     //this.startRawLocYLev0 = this.canvas.height * (1-this.startNormLocYLev0);
     this.startRawLocXLev0 = (this.centerRawLocXLev0-this.maxMoveStickLev0) + this.maxMoveStickLev0*2 * this.startNormLocXLev0;
     this.startRawLocYLev0 = (this.centerRawLocXLev0-this.maxMoveStickLev0) + this.maxMoveStickLev0*2 * (1-this.startNormLocYLev0);
     this.startRawLocXLev1 = this.maxMoveStickLev1*2 * this.startNormLocXLev1;
     this.startRawLocYLev1 = this.maxMoveStickLev1*2 * (1-this.startNormLocYLev1);
-    console.log(this.startNormLocXLev0, this.startNormLocYLev0)
 
 
     this.setupParameters = {
@@ -667,21 +666,21 @@ export class JoyStick {
    * @desc Get the parameters given when initializing this object
    * @return dict
    */
-  GetGivenParameters() {
+  getGivenParameters() {
     return this.givenParameters;
   };
   /**
    * @desc Get the parameters that were calculated initially during setting up the object
    * @return dict
    */
-  GetSetupParameters() {
+  getSetupParameters() {
     return this.setupParameters;
   };
   /**
    * @desc Get the parameters that were calculated initially during setting up the object
    * @return dict
    */
-  GetWorkingParameters() {
+  getWorkingParameters() {
     return {
       currentRawLocXLev0: this.currentRawLocXLev0,
       currentRawLocYLev0: this.currentRawLocYLev0,
@@ -703,7 +702,7 @@ export class JoyStick {
    * @desc The width of this.canvas
    * @return Number of pixel width
    */
-  GetWidth() {
+  getWidth() {
     return this.canvas.width;
   };
 
@@ -711,7 +710,7 @@ export class JoyStick {
    * @desc The height of this.canvas
    * @return Number of pixel height
    */
-  GetHeight() {
+  getHeight() {
     return this.canvas.height;
   };
 
@@ -720,7 +719,7 @@ export class JoyStick {
    * @param {number?} level
    * @return Number that indicate relative position
    */
-  GetRawLocX({level=null}={}) {
+  getRawLocX({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return this.currentRawLocXLev0;
     else if (level===1) return this.currentRawLocXLev1;
 
@@ -730,11 +729,11 @@ export class JoyStick {
    * @param {number?} level
    * @return Number that indicates relative position
    */
-  GetRawLocY({level=null}={}) {
+  getRawLocY({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return this.currentRawLocYLev0;
     else if (level===1) return this.currentRawLocYLev1;
   };
-  GetRawLocDeg({level=null}={}) {
+  getRawLocDeg({level=null}={}) {
     if (isNullOrUndef(level) || level===0) return this.currentRawLocDeg;
     else return undefined;
   }
@@ -743,10 +742,10 @@ export class JoyStick {
    * @param {number?} level
    * @return Array of numbers that indicate relative position
    */
-  GetRawLoc({level=null}={}) {
+  getRawLoc({level=null}={}) {
     return [this.GetRawLocX({level:level}), this.GetRawLocY({level:level}), this.GetRawLocDeg({level:level})];
   }
-  SetRawLoc(rawLocX, rawLocY, rawLocDeg, {doRedraw=true, level=null}={}) {
+  setRawLoc(rawLocX, rawLocY, rawLocDeg, {doRedraw=true, level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       if (!isNullOrUndef(rawLocX)) this.currentRawLocXLev0 = rawLocX;
       if (!isNullOrUndef(rawLocY)) this.currentRawLocYLev0 = rawLocY;
@@ -764,10 +763,10 @@ export class JoyStick {
 
   };
 
-  GetRawLocLev1() {
+  getRawLocLev1() {
     return this.GetRawLoc({level:1});
   }
-  SetRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, doRedraw=true) {
+  setRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, doRedraw=true) {
     return this.SetRawLoc(rawLocXLev1,rawLocYLev1,rawLocDegLev1,{doRedraw: doRedraw, level:1});
   };
 
@@ -776,22 +775,23 @@ export class JoyStick {
    * @param {number?} level
    * @return Float from 0 to 1
    */
-  GetNormLocX({level=null}={}) {
+  getNormLocX({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocXLevCombined();
     if (level===0) return (1 + (this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)/2.0;
     else if (level===1) return (1 + (this.currentRawLocXLev1 - this.centerRawLocXLev1) / this.maxMoveStickLev1)/2.0;
   };
+
   /**
    * @desc Normalized value of Y move of stick
    * @param {number?} level
    * @return Float from 0 to 1
    */
-  GetNormLocY({level=null}={}) {
+  getNormLocY({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocYLevCombined();
     if (level===0) return (1 + (this.currentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0  * -1)/2.0;
     else if (level===1) return (1 + (this.currentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1  * -1)/2.0;
   };
-  GetNormLocDeg({level=null}={}) {
+  getNormLocDeg({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentRawLocDeg)) {
         return null;
@@ -807,54 +807,54 @@ export class JoyStick {
    * @param {number?} level
    * @return Array of floats from 0 to 1
    */
-  GetNormLoc({level=null}={}) {
+  getNormLoc({level=null}={}) {
     if (isNullOrUndef(level) || level===-1) return this.GetNormLocLevCombined();
     else return [this.GetNormLocX({level:level}), this.GetNormLocY({level:level}), this.GetNormLocDeg({level:level})];
     //if (level===0) return [this.GetNormLocX(), this.GetNormLocY(), this.GetNormLocDeg()];
     //else if (level===1) return [this.GetNormLocX({level:1}), this.GetNormLocY({level:1}), this.GetNormLocDeg({level:1})];
   };
-  GetNormLocXLev1() {
+  getNormLocXLev1() {
     return this.GetNormLocX({level:1});
   };
-  GetNormLocYLev1() {
+  getNormLocYLev1() {
     return this.GetNormLocY({level:1});
   };
-  GetNormLocLev1() {
+  getNormLocLev1() {
     return this.GetNormLoc({level:1});
   };
 
-  GetCombinedLevValue(normLev0, normLev1) {
+  getCombinedLevValue(normLev0, normLev1) {
     const relativeJoystickPower = 0.2;
     // create weighted sum value, then divide by max possible value
     return (normLev0 + normLev1*relativeJoystickPower) / (1+relativeJoystickPower);
   }
-  GetNormLocXLevCombined() {
+  getNormLocXLevCombined() {
     const normLocXLevCombined = this.GetCombinedLevValue(
       this.GetNormLocX({level:0}),
       this.GetNormLocX({level:1})
     );
     return normLocXLevCombined;
   }
-  GetNormLocYLevCombined() {
+  getNormLocYLevCombined() {
     const normLocYLevCombined = this.GetCombinedLevValue(
       this.GetNormLocY({level:0}),
       this.GetNormLocY({level:1})
     );
     return normLocYLevCombined;
   }
-  GetNormLocLevCombined() {
+  getNormLocLevCombined() {
     return [this.GetNormLocXLevCombined(), this.GetNormLocYLevCombined(), this.GetNormLocDeg()];
   }
 
-  SetNormLocX(normX, doRedraw=true) {
+  setNormLocX(normX, doRedraw=true) {
     this.SetNormLoc(normX, null, null,{doRedraw:doRedraw});
     return this.currentRawLocXLev0;
   };
-  SetNormLocY(normY, doRedraw=true) {
+  setNormLocY(normY, doRedraw=true) {
     this.SetNormLoc(null, normY, null,{doRedraw:doRedraw});
     return this.currentRawLocYLev0;
   };
-  SetNormLocDeg(normDeg, doRedraw=true) {
+  setNormLocDeg(normDeg, doRedraw=true) {
     this.SetNormLoc(null, null, normDeg,{doRedraw:doRedraw});
     return this.currentRawLocDeg;
   };
@@ -871,7 +871,7 @@ export class JoyStick {
     normLev0 == normLevCombined*(1+relativeJoystickPower) - normLev1*relativeJoystickPower
     normLev1 == (normLevCombined*(1+relativeJoystickPower) - normLev0) / relativeJoystickPower
    */
-  SetNormLoc(normX, normY, normDeg, {doRedraw = true, level=null}={}) {
+  setNormLoc(normX, normY, normDeg, {doRedraw = true, level=null}={}) {
     if (isNullOrUndef(level) || level===-1) {  // change both levels as necessary
       const relativeJoystickPower = 0.2;
 
@@ -928,7 +928,7 @@ export class JoyStick {
     }
 
   };
-  SetNormLocLev1(normXLev1, normYLev1, normDegLev1, doRedraw=true) {
+  setNormLocLev1(normXLev1, normYLev1, normDegLev1, doRedraw=true) {
     this.SetNormLoc(normXLev1,normYLev1,normDegLev1,{doRedraw: doRedraw, level: 1})
   };
 
@@ -936,7 +936,7 @@ export class JoyStick {
    * @desc directional value of X move of stick
    * @return Integer from -100 to +100
    */
-  GetDirLocX({level=null}={}) {
+  getDirLocX({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       return (100 * ((this.currentRawLocXLev0 - this.centerRawLocXLev0) / this.maxMoveStickLev0)).toFixed();
     } else if (level===1) {
@@ -947,14 +947,14 @@ export class JoyStick {
    * @desc directional value of Y move of stick
    * @return Integer from -100 to +100
    */
-  GetDirLocY({level=null}={}) {
+  getDirLocY({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       return (100 * ((this.currentRawLocYLev0 - this.centerRawLocYLev0) / this.maxMoveStickLev0)).toFixed();
     } else if (level===1) {
       return (100 * ((this.currentRawLocYLev1 - this.centerRawLocYLev1) / this.maxMoveStickLev1)).toFixed();
     }
   };
-  GetDirLocDeg({level=null}={}) {
+  getDirLocDeg({level=null}={}) {
     if (isNullOrUndef(level) || level===0) {
       if (isNullOrUndef(this.minArrowLocDegrees) || isNullOrUndef(this.maxArrowLocDegrees) || isNullOrUndef(this.currentRawLocDeg)) {
         return null;
@@ -970,7 +970,7 @@ export class JoyStick {
    * @desc directional value of X and Y move of stick
    * @return Array of integers from -100 to +100
    */
-  GetDirLoc({level=null}={}) {
+  getDirLoc({level=null}={}) {
     return [this.GetDirLocX({level:level}), this.GetDirLocY({level:level}), this.GetDirLocDeg({level:level})];
   };
 
@@ -979,8 +979,60 @@ export class JoyStick {
    * @desc Get the direction of the cursor as a string that indicates the cardinal points where this is oriented
    * @return String of cardinal point N, NE, E, SE, S, SW, W, NW and C when it is placed in the center
    */
-  GetCardinalDirection() {
+  getCardinalDirection() {
     return this.#getCardinalDirection();
   };
+}
+
+
+
+
+
+
+const oldFunctionNames = [
+  "GetGivenParameters",
+  "GetSetupParameters",
+  "GetWorkingParameters",
+  "GetWidth",
+  "GetHeight",
+  "GetRawLocX",
+  "GetRawLocY",
+  "GetRawLocDeg",
+  "GetRawLoc",
+  "SetRawLoc",
+  "GetRawLocLev1",
+  "SetRawLocLev1",
+  "GetNormLocX",
+  "GetNormLocY",
+  "GetNormLocDeg",
+  "GetNormLoc",
+  "GetNormLocXLev1",
+  "GetNormLocYLev1",
+  "GetNormLocLev1",
+  "GetCombinedLevValue",
+  "GetNormLocXLevCombined",
+  "GetNormLocYLevCombined",
+  "GetNormLocLevCombined",
+  "SetNormLocX",
+  "SetNormLocY",
+  "SetNormLocDeg",
+  "SetNormLoc",
+  "SetNormLocLev1",
+  "GetDirLocX",
+  "GetDirLocY",
+  "GetDirLocDeg",
+  "GetDirLoc",
+  "GetCardinalDirection",
+]
+
+//JoyStick.prototype["GetNormLocX"] = JoyStick.prototype["getNormLocX"];
+//JoyStick.prototype.GetNormLocX = JoyStick.prototype.getNormLocX;
+
+for (let ind=0; ind < oldFunctionNames.length; ind++) {
+  const oldFunctionName = oldFunctionNames[ind];
+  const newFunctionName = oldFunctionName.substring(0,1).toLowerCase() + oldFunctionName.substring(1);
+  if (!isNullOrUndef(JoyStick.prototype[newFunctionName])) {
+    JoyStick.prototype[oldFunctionName] = JoyStick.prototype[newFunctionName];
+  }
 }
 
