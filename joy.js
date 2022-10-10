@@ -761,7 +761,7 @@ export class JoyStick {
   getRawLocLev1() {
     return this.getRawLoc({level:1});
   }
-  setRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, doRedraw=true) {
+  setRawLocLev1(rawLocXLev1, rawLocYLev1, rawLocDegLev1, {doRedraw=true}={}) {
     return this.setRawLoc(rawLocXLev1,rawLocYLev1,rawLocDegLev1,{doRedraw: doRedraw, level:1});
   }
 
@@ -807,13 +807,13 @@ export class JoyStick {
     //if (level===0) return [this.getNormLocX(), this.getNormLocY(), this.getNormLocDeg()];
     //else if (level===1) return [this.getNormLocX({level:1}), this.getNormLocY({level:1}), this.getNormLocDeg({level:1})];
   }
-  getNormLocXLev1() {
+  getNormLocXLev1({}={}) {
     return this.getNormLocX({level:1});
   }
-  getNormLocYLev1() {
+  getNormLocYLev1({}={}) {
     return this.getNormLocY({level:1});
   }
-  getNormLocLev1() {
+  getNormLocLev1({}={}) {
     return this.getNormLoc({level:1});
   }
 
@@ -840,15 +840,15 @@ export class JoyStick {
     return [this.getNormLocXLevCombined(), this.getNormLocYLevCombined(), this.getNormLocDeg()];
   }
 
-  setNormLocX(normX, doRedraw=true) {
+  setNormLocX(normX, {doRedraw=true}={}) {
     this.setNormLoc(normX, null, null,{doRedraw:doRedraw});
     return this.currentRawLocXLev0;
   }
-  setNormLocY(normY, doRedraw=true) {
+  setNormLocY(normY, {doRedraw=true}={}) {
     this.setNormLoc(null, normY, null,{doRedraw:doRedraw});
     return this.currentRawLocYLev0;
   }
-  setNormLocDeg(normDeg, doRedraw=true) {
+  setNormLocDeg(normDeg, {doRedraw=true}={}) {
     this.setNormLoc(null, null, normDeg,{doRedraw:doRedraw});
     return this.currentRawLocDeg;
   }
@@ -922,7 +922,7 @@ export class JoyStick {
     }
   }
   
-  setNormLocLev1(normXLev1, normYLev1, normDegLev1, doRedraw=true) {
+  setNormLocLev1(normXLev1, normYLev1, normDegLev1, {doRedraw=true}={}) {
     this.setNormLoc(normXLev1,normYLev1,normDegLev1,{doRedraw: doRedraw, level: 1})
   }
 
